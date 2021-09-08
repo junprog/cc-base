@@ -53,13 +53,13 @@ class CountTrainer(Trainer):
             raise Exception("gpu is not available")
 
         if 'vgg19' in args.arch: 
-            self.model = VGG(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrain=False)
+            self.model = VGG(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrain=True)
         elif 'resnet' in args.arch:
-            self.model = ResNet(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrain=False)
+            self.model = ResNet(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrain=True)
         elif 'mcnn' in args.arch:
             self.model = MCNN(in_ch=in_ch, up_scale=args.up_scale)
         elif 'csrnet' in args.arch:
-            self.model = CSRNet(in_ch=in_ch, up_scale=args.up_scale, pretrained=False)
+            self.model = CSRNet(in_ch=in_ch, up_scale=args.up_scale, pretrained=True)
 
         self.model.to(self.device)
         print(self.model)
@@ -86,8 +86,8 @@ class CountTrainer(Trainer):
         self.criterion.to(self.device)
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-        #self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[50], gamma=0.1)
-        self.scheduler = None
+        self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[int(args.max_epoch / 2)], gamma=0.1)
+        #self.scheduler = None
 
         self.start_epoch = 0
         if args.resume:
@@ -156,7 +156,7 @@ class CountTrainer(Trainer):
                 epoch_mse.update(np.mean(res * res), N)
                 epoch_mae.update(np.mean(abs(res)), N)
 
-            if steps == 0 and self.epoch % 10 == 0:
+            if steps == 0 and self.epoch % 2 == 0:
                 plotter(self.epoch, inputs, outputs, target, 'tr')
 
         logging.info('Epoch {} Train, Loss: {:.8f}, MSE: {:.2f} MAE: {:.2f}, Cost {:.1f} sec'

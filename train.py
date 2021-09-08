@@ -60,7 +60,7 @@ def parse_args():
                         help='milestone of save model checkpoint')
 
     # epoch
-    parser.add_argument('--max-epoch', type=int, default=501,
+    parser.add_argument('--max-epoch', type=int, default=301,
                         help='max training epoch')
     parser.add_argument('--val-epoch', type=int, default=10,
                         help='the num of steps to log training information')
