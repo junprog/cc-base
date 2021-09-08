@@ -57,13 +57,9 @@ class CountTrainer(Trainer):
         elif 'resnet' in args.arch:
             self.model = ResNet(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrain=False)
         elif 'mcnn' in args.arch:
-            self.model = MCNN(in_ch=in_ch)
-            args.pool_num = 0
-            args.up_scale = 1
+            self.model = MCNN(in_ch=in_ch, up_scale=args.up_scale)
         elif 'csrnet' in args.arch:
-            self.model = CSRNet(in_ch=in_ch, pretrained=False)
-            args.pool_num = 0
-            args.up_scale = 1
+            self.model = CSRNet(in_ch=in_ch, up_scale=args.up_scale, pretrained=False)
 
         self.model.to(self.device)
         print(self.model)

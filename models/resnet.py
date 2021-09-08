@@ -10,11 +10,11 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
         """
         feature_extracter : ResNetの最終fc層なくした事前学習モデル
-        down_channels : channel数を削減する (regressiion)
+        regresser : channel数を削減する (regressiion)
         """
 
         self.feature_extracter = make_resnet_feature_extracter(model, pool_num, in_ch=in_ch, pretrain=pretrain)
-        self.resgresser = make_resnet_down_channels(model, pool_num)
+        self.regresser = make_resnet_regresser(model, pool_num)
 
         self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
         self.up_scale = up_scale
@@ -25,15 +25,18 @@ class ResNet(nn.Module):
         if self.up_scale != 1:
             x = F.interpolate(x, scale_factor=self.up_scale, mode='bilinear', align_corners=False)
 
-        x = self.resgresser(x)
+        x = self.regresser(x)
         x = self.output_layer(x)
 
         return torch.abs(x)
 
 
 def make_resnet_feature_extracter(model, pool_num, in_ch=3, pretrain=False):
-    if model == 'resnet18':
-        model = models.resnet18(pretrained=True)
+    if model == 'resnet18' or model == 'resnet34':
+        if model == 'resnet18':
+            model = models.resnet18(pretrained=pretrain)
+        if model == 'resnet34':
+            model = models.resnet34(pretrained=pretrain)
 
         layers = list(model.children())[:-2]
 
@@ -76,8 +79,8 @@ def make_resnet_feature_extracter(model, pool_num, in_ch=3, pretrain=False):
 
     return extracter
 
-def make_resnet_down_channels(model, pool_num):
-    if model == 'resnet18':
+def make_resnet_regresser(model, pool_num):
+    if model == 'resnet18' or model == 'resnet34':
         base_ch = 64
         layers = []
 

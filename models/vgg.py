@@ -10,14 +10,14 @@ class VGG(nn.Module):
         super(VGG, self).__init__()
         """
         feature_extracter : VGGの最終fc層なくした事前学習モデル
-        down_channels : channel数を削減する (regressiion)
+        regresser : channel数を削減する (regressiion)
         """
         if model == 'vgg19':
             self.feature_extracter = make_vgg19_feature_extracter(pool_num, in_ch=in_ch, bn=False, pretrain=pretrain)
-            self.resgresser = make_vgg_down_channels()
+            self.regresser = make_vgg_regresser()
         elif model == 'vgg19_bn':
             self.feature_extracter = make_vgg19_feature_extracter(pool_num, in_ch=in_ch, bn=True, pretrain=pretrain)
-            self.resgresser = make_vgg_down_channels()
+            self.regresser = make_vgg_regresser()
 
         self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
         self.up_scale = up_scale
@@ -28,7 +28,7 @@ class VGG(nn.Module):
         if self.up_scale != 1:
             x = F.interpolate(x, scale_factor=self.up_scale, mode='bilinear', align_corners=False)
 
-        x = self.resgresser(x)
+        x = self.regresser(x)
         x = self.output_layer(x)
 
         return torch.abs(x)
@@ -66,7 +66,7 @@ def make_vgg19_feature_extracter(pool_num, in_ch=3, bn=False, pretrain=False):
 
     return nn.Sequential(*layers)
 
-def make_vgg_down_channels():
+def make_vgg_regresser():
     base_ch = 64
     layers = []
 
