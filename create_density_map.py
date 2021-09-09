@@ -1,10 +1,10 @@
 """ground truth の密度マップを npy ファイルとして指定したディレクトリに保存
 """
 ## TODO
-# ShanghaiTech partA
-# ShanghaiTech partB
-# UCF-QNRF
-# ShanghaiTechRGBD
+# ShanghaiTech partA: done
+# ShanghaiTech partB: done
+# UCF-QNRF: done
+# ShanghaiTechRGBD: done
 # RGBT-CC
 
 import os
@@ -14,10 +14,7 @@ import argparse
 from tqdm import tqdm
 import numpy as np
 from PIL import Image
-import scipy.io as io
 from scipy.ndimage.filters import gaussian_filter
-import torchvision.transforms.functional as F
-from matplotlib import pyplot as plt
 
 from datasets.data_util import *
 
