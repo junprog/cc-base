@@ -14,8 +14,10 @@ class CSRNet(nn.Module):
         self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
         if not pretrained:
             mod = models.vgg16(pretrained = True)
+            #mod = models.vgg19_bn(pretrained = True)
             self._initialize_weights()
             self.frontend.load_state_dict(mod.features[0:23].state_dict())
+            #self.frontend.load_state_dict(mod.features[0:39].state_dict())
 
     def forward(self,x):
         x = self.frontend(x)

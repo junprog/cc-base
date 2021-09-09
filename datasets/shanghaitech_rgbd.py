@@ -1,8 +1,6 @@
 import random
 import numpy as np
 from PIL import Image
-from scipy.ndimage.filters import gaussian_filter
-from torch._C import dtype
 
 import torch
 import torch.utils.data as data
@@ -19,7 +17,6 @@ class ShanghaiTechRGBD(data.Dataset):
         crop_size               --- 学習時のクロップサイズ
         phase                   --- tarinかvalのフェーズ指定
 
-        gaussian_std            --- ガウシアンフィルタのstd値
         model_scale             --- モデルの出力のダウンスケール
         up_scale                --- 特徴マップにかけるアップスケール
         

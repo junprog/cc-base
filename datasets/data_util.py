@@ -24,7 +24,7 @@ dataset_dict = {
 }
 
 def judge_dataset(data_dir):
-    """データセットのディレクトリからデータセット名を取得し、返す
+    """データセットのディレクトリ構造からデータセット名を取得し、返す
 
     Args:
         data_dir        --- データセットのパス
@@ -137,54 +137,69 @@ def create_gt_path(image_path, dataset, phase) -> str:
     Args:
         image_path      --- 画像のパス
         dataset         --- データセットの種類
-        phase
+        phase           --- train, val, test
 
     Return:
         gt_path         --- ground truthのパス
     """
     if phase == 'train' or phase == 'val':
         if dataset == 'ucf-qnrf':
-            # UCF-QNRF_ECCV18/Train/img_0001.jpg
-            # UCF-QNRF_ECCV18/Train/img_0001_ann.mat
             gt_path = image_path.replace('.jpg', '_ann.mat')
 
         elif dataset == 'shanghai-tech-a' or dataset == 'shanghai-tech-b':
-            # ShanghaiTech/part_A/train_data/images/IMG_1.jpg
-            # ShanghaiTech/part_A/train_data/ground_truth/GT_IMG_1.mat
             gt_path = image_path.replace('.jpg','.mat').replace('images','ground_truth').replace('IMG_','GT_IMG_')
 
         if dataset == 'shanghai-tech-rgbd':
-            # ShanghaiTechRGBD/train_data/train_img/IMG_0000.png
-            # ShanghaiTechRGBD/train_data/train_gt/GT_0000.mat
             gt_path = image_path.replace('img/IMG', 'gt/GT').replace('.png','.mat')
 
     elif phase == 'test':
         if dataset == 'ucf-qnrf':
-            # UCF-QNRF_ECCV18/Test/img_0001.jpg
-            # UCF-QNRF_ECCV18/Test/img_0001_ann.mat
             gt_path = image_path.replace('.jpg', '_ann.mat')
 
         elif dataset == 'shanghai-tech-a' or dataset == 'shanghai-tech-b':
-            # ShanghaiTech/part_A/test_data/images/IMG_1.jpg
-            # ShanghaiTech/part_A/test_data/ground_truth/GT_IMG_1.mat
             gt_path = image_path.replace('.jpg','.mat').replace('images','ground_truth').replace('IMG_','GT_IMG_')
 
         if dataset == 'shanghai-tech-rgbd':
-            # ShanghaiTechRGBD/test_data/test_img/IMG_0000.png
-            # ShanghaiTechRGBD/test_data/test_gt_np/GT_0000.npy
             gt_path = image_path.replace('img/IMG', 'gt_np/GT').replace('.png','.npy')
     
     return gt_path
 
 def create_density_path(image_path, dataset, phase) -> str:
+    """画像パスから density のパスを返す
+
+    Args:
+        image_path      --- 画像のパス
+        dataset         --- データセットの種類
+        phase           --- train, val, test
+
+    Return:
+        density_path         --- ground truthのパス
+    """
     if phase == 'train' or phase == 'val':
-        density_path = image_path.replace('train_img/IMG', 'train_den_15/GT').replace('.png','.npy')
+        if dataset == 'ucf-qnrf':
+            density_path = image_path.replace('.jpg', '_den.npy')
+
+        elif dataset == 'shanghai-tech-a' or dataset == 'shanghai-tech-b':
+            density_path = image_path.replace('.jpg','.npy').replace('images', 'den_15').replace('IMG_','GT_IMG_')
+
+        if dataset == 'shanghai-tech-rgbd':
+            density_path = image_path.replace('train_img/IMG', 'train_den_15/GT').replace('.png','.npy')
+    
     elif phase == 'test':
-        density_path = image_path.replace('test_img/IMG', 'test_den_15/GT').replace('.png','.npy')
+        if dataset == 'ucf-qnrf':
+            density_path = image_path.replace('.jpg', '_den.npy')
+
+        elif dataset == 'shanghai-tech-a' or dataset == 'shanghai-tech-b':
+            density_path = image_path.replace('.jpg','.npy').replace('images', 'den_15').replace('IMG_','GT_IMG_')
+
+        if dataset == 'shanghai-tech-rgbd':
+            density_path = image_path.replace('test_img/IMG', 'test_den_15/GT').replace('.png','.npy')
 
     return density_path
 
 def create_depth_path(image_path, dataset, phase) -> str:
+    """ShanghaiTechRGBD のみに使用
+    """
     if phase == 'train' or phase == 'val':
         # /mnt/hdd02/ShanghaiTechRGBD/train_data/train_img/IMG_0000.png
         # /mnt/hdd02/ShanghaiTechRGBD/train_data/train_depth/DEPTH_0000.mat
@@ -214,7 +229,7 @@ def load_gt(gt_path) -> np.ndarray:
                     return io.loadmat(f)['annPoints']
 
             # ShanghaiTech A, B
-            elif ( 'part_A' or 'part_B' ) in gt_path:
+            elif ('part_A' in gt_path) or ('part_B' in gt_path):
                 with open(gt_path, 'rb') as f:
                     return io.loadmat(f)['image_info'][0,0][0,0][0]
 
@@ -408,3 +423,169 @@ def split_image_by_num(image: Image, width_patch_num: int, height_patch_num: int
                 images.append(splitted_pil_img)
         
     return images
+
+def dirname_parser(dataset, phase, style):
+    """データセット名から style: [image, depth, tempareture, gt, density, bbox] パスを返す
+    ShanghaiTech/
+        ├ part_A/
+        │   ├ train_data/
+        │   │   ├ images/
+        │   │   │   └ IMG_*.jpg: image
+        │   │   ├ (own) den_15/
+        │   │   │   └ GT_IMG_*.npy: density
+        │   │   └ ground_truth/
+        │   │       └ GT_IMG_*.mat: gt   
+        │   │
+        │   └ test_data/
+        │       ├ images/
+        │       │   └ IMG_*.jpg: image
+        │       ├ (own) den_15/
+        │       │   └ GT_IMG_*.npy: density
+        │       └ ground_truth/
+        │           └ GT_IMG_*.mat: gt  
+        │ 
+        └ part_B/
+            ├ train_data/
+            │   ├ images/
+            │   │   └ IMG_*.jpg: image
+            │   ├ (own) den_15/
+            │   │   └ GT_IMG_*.npy: density
+            │   └ ground_truth/
+            │       └ GT_IMG_*.mat: gt   
+            │
+            └ test_data/
+                ├ images/
+                │   └ IMG_*.jpg: image
+                ├ (own) den_15/
+                │   └ GT_IMG_*.npy: density
+                └ ground_truth/
+                    └ GT_IMG_*.mat: gt  
+
+    ShanghaiTechRGBD/
+        ├ train_data/
+        |   ├ train_img/
+        |   │   └ IMG_*.png: image
+        |   ├ train_gt/
+        │   │   └ GT_*.mat: gt
+        |   ├ train_depth/
+        |   |   └ DEPTH_*.mat: depth
+        |   ├ train_bbox/
+        |   |   └ BBOX_*.mat: bbox
+        |   └ (own) train_den_15/
+        |       └ GT_*.npy: density
+        |
+        └ test_data/
+            ├ test_img/
+            │   └ IMG_*.png: image
+            ├ (own) test_gt_np/
+            │   └ GT_*.npy: gt
+            ├ test_depth/
+            |   └ DEPTH_*.mat: depth
+            ├ test_bbox/
+            |   └ BBOX_*.mat: bbox
+            └ (own) test_den_15/
+                └ GT_*.npy: density
+
+    UCF-QNRF_ECCV18/
+        ├ Train/
+        │   ├ img_*.jpg: image
+        │   ├ img_*_ann.mat: gt
+        |   └ (own) img_*_den.npy: density
+        │
+        └ Test/
+            ├ img_*.jpg: image
+            ├ img_*_ann.mat: gt
+            └ (own) img_*_den.npy: density
+
+    styles = ['image', 'depth', 'tempareture', 'gt', 'density', 'bbox']
+
+    Args:
+        dataset
+        phase
+        style
+
+    Return:
+        target_dirname
+        target_format
+    """
+
+    ## 例外処理
+    have_style_flag = judge_have_style(dataset, style)
+    assert have_style_flag, '{} does not have {}'.format(dataset, style)
+
+    ## train, test スプリット
+    if dataset == 'shanghai-tech-a' or dataset == 'shanghai-tech-b' or dataset == 'shanghai-tech-rgbd':
+        if phase == 'train':
+            split_dirname = 'train_data'
+        elif phase == 'test':
+            split_dirname = 'test_data'
+    elif dataset == 'ucf-qnrf':
+        if phase == 'train':
+            split_dirname = 'Train'
+        elif phase == 'test':
+            split_dirname = 'Test'
+
+    ## スタイル
+    if dataset == 'shanghai-tech-a' or dataset == 'shanghai-tech-b':
+        if style == 'image':
+            style_dirname = 'images'
+            target_format = '*.jpg'
+        elif style == 'gt':
+            style_dirname = 'ground_truth'
+            target_format = '*.mat'
+        elif style == 'density':
+            style_dirname = 'den_15'
+            target_format = '*.npy'
+
+    elif dataset == 'shanghai-tech-rgbd':
+        if style == 'image':
+            style_dirname = phase + '_img'
+            target_format = '*.png'
+        elif style == 'gt':
+            if phase == 'train':
+                style_dirname = phase + '_gt'
+                target_format = '*.mat'
+            elif phase == 'test':
+                style_dirname = phase + '_gt_np'
+                target_format = '*.npy'
+        elif style == 'density':
+            if phase == 'train':
+                style_dirname = phase + '_den_15'
+                target_format = '*.npy'
+            elif phase == 'test':
+                style_dirname = phase + '_den_15'
+                target_format = '*.npy'
+        elif style == 'depth':
+            style_dirname = phase + '_depth'
+            target_format = '*.mat'
+        elif style == 'bbox':
+            style_dirname = phase + '_bbox'
+            target_format = '*.mat'
+
+    elif dataset == 'ucf-qnrf':
+        if style == 'image':
+            style_dirname = ''
+            target_format = '*.jpg'
+        elif style == 'gt':
+            style_dirname = ''
+            target_format = '*.mat'
+        elif style == 'density':
+            style_dirname = ''
+            target_format = '*.npy'
+
+    target_dirname = os.path.join(split_dirname, style_dirname)
+
+    return target_dirname, target_format
+
+def judge_have_style(dataset, style):
+    flag = True
+    if dataset == 'shanghai-tech-a' or dataset == 'shanghai-tech-b' or dataset == 'ucf-qnrf':
+        not_have_style = ['depth', 'tempareture', 'bbox']
+        if style in not_have_style:
+            flag = False
+    elif dataset == 'shanghai-tech-rgbd':
+        not_have_style = ['tempareture']
+        if style in not_have_style:
+            flag = False
+
+    return flag

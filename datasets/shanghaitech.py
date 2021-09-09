@@ -1,8 +1,6 @@
 import random
 import numpy as np
 from PIL import Image
-from scipy.ndimage.filters import gaussian_filter
-from torch._C import dtype
 
 import torch
 import torch.utils.data as data
@@ -11,51 +9,41 @@ from torchvision import transforms
 
 from datasets.data_util import *
 
-class ShanghaiTech(data.Dataset):
-    """ShanghaiTech dataet
+class ShanghaiTechA(data.Dataset):
+    """ShanghaiTech partA dataet
     Args:
+        dataset                 --- データセット名
         json_path               --- 画像のパスリストが記載されてるjsonパス
-        part                    --- ST Part (a or b)
         crop_size               --- 学習時のクロップサイズ
         phase                   --- tarinかvalのフェーズ指定
-        rescale                 --- 512 < size < 2048 変換をしているか否か
 
-        target_over_crop        --- ラベルノイズに対応するためにあえて大きくクロップ -> ガウシアンフィルタ -> もともとのクロップサイズにクロップ
-        over_crop_len           --- オーバークロップの長さ(操作後のサイズ: over_clop_len + crop_size + over_crop_len となる)
+        rescale                 --- 512 < size < 2048 変換をしているか否か (STA のみ)
 
-        gaussian_std            --- ガウシアンフィルタのstd値
         model_scale             --- モデルの出力のダウンスケール
         up_scale                --- 特徴マップにかけるアップスケール
         
     Return:
-        image                   --- tuple (等倍画像、1/2画像)
-        target                  --- tuple (等倍GT、1/2GT)
+        image                   --- 画像
+        target                  --- GT
         num                     --- 画像内の人数 (train: GT density mapのsum, val: len(location))
     """
 
     def __init__(
             self,
+            dataset: str,
             json_path: str,
-            part: str,
             crop_size: tuple,
             phase='train',
             rescale=False,
-            target_over_crop=True,
-            over_crop_len=10,
-            gaussian_std=15,
             model_scale=16,
             up_scale=4
         ):
 
-        self.dataset = 'st-' + part
+        self.dataset = dataset
         self.crop_size = crop_size
         self.phase = phase
         self.rescale = rescale
 
-        self.target_over_crop = target_over_crop
-        self.over_crop_len = over_crop_len
-
-        self.gaussian_std = gaussian_std
         self.model_scale = model_scale
         self.up_scale = up_scale
 
@@ -153,75 +141,6 @@ class ShanghaiTech(data.Dataset):
 
         ## クロップ
         image = F.crop(image, self.top, self.left, self.crop_size[0], self.crop_size[1])
-        
-        if self.target_over_crop:
-            ## あえて大きくクロップする処理
-            over_top, over_left, over_crop_size = self._decide_over_area(self.top, self.left)
-            gt_map = F.crop(gt_map, over_top, over_left, over_crop_size[0], over_crop_size[1])
-        else:
-            gt_map = F.crop(gt_map, self.top, self.left, self.crop_size[0], self.crop_size[1])
+        gt_map = F.crop(gt_map, self.top, self.left, self.crop_size[0], self.crop_size[1])
 
         return image, gt_map
-
-    def _decide_over_area(self, top, left):
-        ## あえて大きくクロップするときのエリアの決定
-        self.over_top_len = self.over_crop_len
-        over_under_len = self.over_crop_len
-        
-        self.over_left_len = self.over_crop_len
-        over_right_len = self.over_crop_len
-
-        if top == 0:
-            over_top = top
-            self.over_top_len = 0
-        elif self.over_crop_len > top:
-            over_top = 0
-            self.over_top_len = top
-        else:
-            over_top = top - self.over_crop_len
-            if self.img_size[1] - (top + self.crop_size[1]) >= self.over_crop_len:
-                pass
-            else:
-                over_under_len = self.img_size[1] - (top + self.crop_size[1])
-        
-        if left == 0:
-            over_left = left
-            self.over_left_len = 0
-        elif self.over_crop_len > left:
-            over_left = 0
-            self.over_left_len = left
-        else:
-            over_left = left - self.over_crop_len
-            if self.img_size[0] - (left + self.crop_size[0]) >= self.over_crop_len:
-                pass
-            else:
-                over_right_len = self.img_size[0] - (left + self.crop_size[0])
-
-        over_crop_height_size = self.crop_size[1] + self.over_top_len + over_under_len
-        over_crop_width_size = self.crop_size[0] + self.over_left_len + over_right_len
-
-        over_crop_size = (over_crop_height_size, over_crop_width_size)
-
-        return over_top, over_left, over_crop_size
-
-    def _create_target(self, gt_map):
-        ## ガウシアンフィルタリング
-        gt_map = np.array(gt_map)
-        gt_density = gaussian_filter(gt_map, self.gaussian_std)
-        gt_density = Image.fromarray(gt_density)
-
-        ## あえて大きくクロップした場合のみ、もともとのクロップを実行
-        if self.target_over_crop and self.phase == 'train':
-            gt_density = F.crop(gt_density, self.over_top_len, self.over_left_len, self.crop_size[0], self.crop_size[1])
-
-        ## モデルのアウトプットサイズに合わせる
-        in_size = gt_density.size
-        self.scale_factor = self.model_scale / self.up_scale
-        out_size = (int(in_size[0] / self.scale_factor), int(in_size[1] / self.scale_factor))
-        gt_density = gt_density.resize(out_size, resample=Image.BICUBIC)
-
-        ## リサイズ時の補間による数値的な変化を戻すためのスケーリング
-        gt_density = np.array(gt_density)
-        gt_density = gt_density * (self.scale_factor*self.scale_factor)
-
-        return Image.fromarray(gt_density)
