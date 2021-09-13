@@ -18,7 +18,7 @@ from utils.visualizer import GraphPlotter, Plotter
 from utils.helper import worker_init_fn, Save_Handle, AverageMeter
 
 from datasets.ucf_qnrf import UCF_QNRF
-from datasets.shanghaitech import ShanghaiTech
+from datasets.shanghaitech import ShanghaiTechA, ShanghaiTechB
 from datasets.shanghaitech_rgbd import ShanghaiTechRGBD
 
 from models.vgg import VGG
@@ -66,6 +66,25 @@ class CountTrainer(Trainer):
 
         if 'shanghai-tech-rgbd' == args.dataset:
             self.datasets = {x: ShanghaiTechRGBD(
+                dataset=args.dataset,
+                json_path=os.path.join('json', args.dataset, x +'.json'),
+                crop_size=crop_size,
+                phase=x,
+                model_scale=2 ** args.pool_num,
+                up_scale=args.up_scale
+            ) for x in ['train', 'val']}
+        elif 'shanghai-tech-a' == args.dataset:
+            self.datasets = {x: ShanghaiTechA(
+                dataset=args.dataset,
+                json_path=os.path.join('json', args.dataset, x +'.json'),
+                crop_size=crop_size,
+                phase=x,
+                rescale=False,
+                model_scale=2 ** args.pool_num,
+                up_scale=args.up_scale
+            ) for x in ['train', 'val']}
+        elif 'shanghai-tech-b' == args.dataset:
+            self.datasets = {x: ShanghaiTechB(
                 dataset=args.dataset,
                 json_path=os.path.join('json', args.dataset, x +'.json'),
                 crop_size=crop_size,
