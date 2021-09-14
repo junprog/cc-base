@@ -6,17 +6,17 @@ import torchvision.models as models
 from collections import OrderedDict
 
 class VGG(nn.Module):
-    def __init__(self, in_ch=3, pool_num=3, model='vgg19_bn', up_scale=8, pretrain=False):
+    def __init__(self, in_ch=3, pool_num=3, model='vgg19_bn', up_scale=8, pretrained=False):
         super(VGG, self).__init__()
         """
         feature_extracter : VGGの最終fc層なくした事前学習モデル
         regresser : channel数を削減する (regressiion)
         """
         if model == 'vgg19':
-            self.feature_extracter = make_vgg19_feature_extracter(pool_num, in_ch=in_ch, bn=False, pretrain=pretrain)
+            self.feature_extracter = make_vgg19_feature_extracter(pool_num, in_ch=in_ch, bn=False, pretrained=pretrained)
             self.regresser = make_vgg_regresser()
         elif model == 'vgg19_bn':
-            self.feature_extracter = make_vgg19_feature_extracter(pool_num, in_ch=in_ch, bn=True, pretrain=pretrain)
+            self.feature_extracter = make_vgg19_feature_extracter(pool_num, in_ch=in_ch, bn=True, pretrained=pretrained)
             self.regresser = make_vgg_regresser()
 
         self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
@@ -33,10 +33,9 @@ class VGG(nn.Module):
 
         return torch.abs(x)
 
-
-def make_vgg19_feature_extracter(pool_num, in_ch=3, bn=False, pretrain=False):
+def make_vgg19_feature_extracter(pool_num, in_ch=3, bn=False, pretrained=False):
     if bn == False:
-        model = models.vgg19(pretrained=pretrain)
+        model = models.vgg19(pretrained=pretrained)
         head_flag = False
         if in_ch != 3:
             head_flag = True
@@ -50,7 +49,7 @@ def make_vgg19_feature_extracter(pool_num, in_ch=3, bn=False, pretrain=False):
         if head_flag:
             layers[0] = head_conv
     else:
-        model = models.vgg19_bn(pretrained=pretrain)
+        model = models.vgg19_bn(pretrained=pretrained)
         head_flag = False
         if in_ch != 3:
             head_flag = True

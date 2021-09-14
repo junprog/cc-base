@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from torchvision import models
 import torch.nn.functional as F
@@ -7,17 +8,19 @@ class CSRNet(nn.Module):
         super(CSRNet, self).__init__()
         self.up_scale = up_scale
         self.seen = 0
-        self.frontend_feat = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512]
-        self.backend_feat  = [512, 512, 512,256,128,64]
-        self.frontend = make_layers(self.frontend_feat, in_channels=in_ch)
+        #self.frontend_feat = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512]
+        self.frontend_feat = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512]
+        self.backend_feat  = [512, 512, 512, 256, 128, 64]
+        #self.frontend = make_layers(self.frontend_feat, in_channels=in_ch)
+        self.frontend = make_layers(self.frontend_feat, in_channels=in_ch, batch_norm=True)
         self.backend = make_layers(self.backend_feat, in_channels=512, dilation=True)
         self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
-        if not pretrained:
-            mod = models.vgg16(pretrained = True)
-            #mod = models.vgg19_bn(pretrained = True)
+        if pretrained:
+            #mod = models.vgg16(pretrained = True)
+            mod = models.vgg19_bn(pretrained = True)
             self._initialize_weights()
-            self.frontend.load_state_dict(mod.features[0:23].state_dict())
-            #self.frontend.load_state_dict(mod.features[0:39].state_dict())
+            #self.frontend.load_state_dict(mod.features[0:23].state_dict())
+            self.frontend.load_state_dict(mod.features[0:39].state_dict())
 
     def forward(self,x):
         x = self.frontend(x)
@@ -27,7 +30,7 @@ class CSRNet(nn.Module):
         if self.up_scale != 1:
             x = F.interpolate(x, scale_factor=self.up_scale, mode='bilinear', align_corners=False)
             
-        return x
+        return torch.abs(x)
         
     def _initialize_weights(self):
         for m in self.modules():

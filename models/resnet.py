@@ -6,14 +6,14 @@ import torchvision.models as models
 from collections import OrderedDict
 
 class ResNet(nn.Module):
-    def __init__(self, in_ch=3, pool_num=4, model='resnet50', up_scale=8, pretrain=False):
+    def __init__(self, in_ch=3, pool_num=4, model='resnet50', up_scale=8, pretrained=False):
         super(ResNet, self).__init__()
         """
         feature_extracter : ResNetの最終fc層なくした事前学習モデル
         regresser : channel数を削減する (regressiion)
         """
 
-        self.feature_extracter = make_resnet_feature_extracter(model, pool_num, in_ch=in_ch, pretrain=pretrain)
+        self.feature_extracter = make_resnet_feature_extracter(model, pool_num, in_ch=in_ch, pretrained=pretrained)
         self.regresser = make_resnet_regresser(model, pool_num)
 
         self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
@@ -31,12 +31,12 @@ class ResNet(nn.Module):
         return torch.abs(x)
 
 
-def make_resnet_feature_extracter(model, pool_num, in_ch=3, pretrain=False):
+def make_resnet_feature_extracter(model, pool_num, in_ch=3, pretrained=False):
     if model == 'resnet18' or model == 'resnet34':
         if model == 'resnet18':
-            model = models.resnet18(pretrained=pretrain)
+            model = models.resnet18(pretraineded=pretrained)
         if model == 'resnet34':
-            model = models.resnet34(pretrained=pretrain)
+            model = models.resnet34(pretraineded=pretrained)
 
         layers = list(model.children())[:-2]
 
@@ -52,9 +52,9 @@ def make_resnet_feature_extracter(model, pool_num, in_ch=3, pretrain=False):
 
     else:
         if model == 'resnet50':
-            model = models.resnet50(pretrained=pretrain)
+            model = models.resnet50(pretraineded=pretrained)
         elif model == 'resnet101':
-            model = models.resnet101(pretrained=pretrain)
+            model = models.resnet101(pretraineded=pretrained)
 
         layers = list(model.children())[:-2]
 

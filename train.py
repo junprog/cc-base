@@ -44,7 +44,7 @@ def parse_args():
                         help='up scale num')               
 
     # optimizer
-    parser.add_argument('--lr', type=float, default=1e-7,
+    parser.add_argument('--lr', type=float, default=1e-5,
                         help='the initial learning rate')
     parser.add_argument('--weight-decay', type=float, default=1e-3,
                         help='the weight decay')

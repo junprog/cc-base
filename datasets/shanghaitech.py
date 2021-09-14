@@ -101,7 +101,7 @@ class ShanghaiTechA(data.Dataset):
             image = self.trans(image)
             target = self.to_tensor(np.array(density))
             
-            return image, target, [], num
+            return image, [], target, num
 
         elif self.phase == 'val' or self.phase == 'test':
             gt_path = create_gt_path(img_path, self.dataset, self.phase)
@@ -123,7 +123,7 @@ class ShanghaiTechA(data.Dataset):
             image = self.trans(image)
             target = self.to_tensor(np.array(density))
 
-            return image, target, [], num
+            return image, [], target, num
 
     def _padding(self, image, gt_map):
         np_gt_map = np.asarray(gt_map)
@@ -237,7 +237,7 @@ class ShanghaiTechB(data.Dataset):
             image = self.trans(image)
             target = self.to_tensor(np.array(density))
             
-            return image, target, [], num
+            return image, [], target, num
 
         elif self.phase == 'val' or self.phase == 'test':
             gt_path = create_gt_path(img_path, self.dataset, self.phase)
@@ -258,8 +258,8 @@ class ShanghaiTechB(data.Dataset):
 
             image = self.trans(image)
             target = self.to_tensor(np.array(density))
-
-            return image, target, [], num
+            
+            return image, [], target, num
 
     def _random_crop(self, image, gt_map):
         ## ランダムクロップのパラメタライズ(クロップ座標を画像とGTマップで固定するため)

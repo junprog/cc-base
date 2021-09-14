@@ -46,7 +46,11 @@ class ShanghaiTechRGBD(data.Dataset):
         self.img_path_list = load_json(json_path)
         self.trans = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        self.depth_trans = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.441], std=[0.329]),
         ])
 
         self.to_tensor = transforms.ToTensor()
@@ -95,7 +99,7 @@ class ShanghaiTechRGBD(data.Dataset):
             
             ## torch.Tensor化、正規化
             image = self.trans(image)
-            depth = self.to_tensor(np.array(depth))
+            depth = self.depth_trans(np.array(depth))
             target = self.to_tensor(np.array(density))
             
             return image, depth, target, num
@@ -118,7 +122,7 @@ class ShanghaiTechRGBD(data.Dataset):
             density = density * (self.scale_factor*self.scale_factor)
 
             image = self.trans(image)
-            depth = self.to_tensor(np.array(depth))
+            depth = self.depth_trans(np.array(depth))
             target = self.to_tensor(np.array(density))
 
             return image, depth, target, num

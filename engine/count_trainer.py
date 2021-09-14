@@ -25,6 +25,7 @@ from models.vgg import VGG
 from models.resnet import ResNet
 from models.mcnn import MCNN
 from models.csrnet import CSRNet
+from models.csrnet_iadm import FusionCSRNet
 
 class CountTrainer(Trainer):
     def setup(self):
@@ -53,13 +54,15 @@ class CountTrainer(Trainer):
             raise Exception("gpu is not available")
 
         if 'vgg19' in args.arch: 
-            self.model = VGG(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrain=True)
+            self.model = VGG(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrained=False)
         elif 'resnet' in args.arch:
-            self.model = ResNet(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrain=True)
+            self.model = ResNet(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrained=False)
         elif 'mcnn' in args.arch:
             self.model = MCNN(in_ch=in_ch, up_scale=args.up_scale)
         elif 'csrnet' in args.arch:
-            self.model = CSRNet(in_ch=in_ch, up_scale=args.up_scale, pretrained=True)
+            self.model = CSRNet(in_ch=in_ch, up_scale=args.up_scale, pretrained=False)
+        elif 'csr_iadm' in args.arch:
+            self.model = FusionCSRNet()
 
         self.model.to(self.device)
         print(self.model)
@@ -104,6 +107,7 @@ class CountTrainer(Trainer):
         self.criterion = nn.MSELoss()
         self.criterion.to(self.device)
 
+        #args.weight_decay = 5*1e-4
         self.optimizer = optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[int(args.max_epoch / 2)], gamma=0.1)
         #self.scheduler = None
@@ -155,8 +159,11 @@ class CountTrainer(Trainer):
                 inputs = depth.to(self.device)
 
             elif self.mode == 'both':
-                inputs = torch.cat([image, depth], dim=1)
-                inputs = inputs.to(self.device)
+                inputs = [image.to(self.device), depth.to(self.device)]
+            
+            # elif self.mode == 'both':
+            #     inputs = torch.cat([image, depth], dim=1)
+            #     inputs = inputs.to(self.device)
             
             target = target.to(self.device)
 
@@ -169,6 +176,7 @@ class CountTrainer(Trainer):
                 self.optimizer.step()
 
                 N = inputs.size(0)
+                #N = inputs[0].size(0)
                 pre_count = torch.sum(outputs.view(N, -1), dim=1).detach().cpu().numpy()
                 res = pre_count - num.detach().cpu().numpy()
                 epoch_loss.update(loss.item(), N)
@@ -177,6 +185,7 @@ class CountTrainer(Trainer):
 
             if steps == 0 and self.epoch % 2 == 0:
                 plotter(self.epoch, inputs, outputs, target, 'tr')
+                #plotter(self.epoch, inputs[0], outputs, target, 'tr')
 
         logging.info('Epoch {} Train, Loss: {:.8f}, MSE: {:.2f} MAE: {:.2f}, Cost {:.1f} sec'
                      .format(self.epoch, epoch_loss.get_avg(), np.sqrt(epoch_mse.get_avg()), epoch_mae.get_avg(),
@@ -214,11 +223,15 @@ class CountTrainer(Trainer):
                 inputs = depth.to(self.device)
 
             elif self.mode == 'both':
-                inputs = torch.cat([image, depth], dim=1)
-                inputs = inputs.to(self.device)
+                inputs = [image.to(self.device), depth.to(self.device)]
+
+            # elif self.mode == 'both':
+            #     inputs = torch.cat([image, depth], dim=1)
+            #     inputs = inputs.to(self.device)
 
             # inputs are images with different sizes
             assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'
+            #assert inputs[0].size(0) == 1, 'the batch size should equal to 1 in validation mode'
             with torch.set_grad_enabled(False):
                 outputs = self.model(inputs)
                 tmp_res += torch.sum(outputs).item()
@@ -228,6 +241,7 @@ class CountTrainer(Trainer):
 
             if steps == 0:
                 plotter(self.epoch, inputs, outputs, target, 'vl', num)
+                #plotter(self.epoch, inputs[0], outputs, target, 'vl', num)
 
         epoch_res = np.array(epoch_res)
         mse = np.sqrt(np.mean(np.square(epoch_res)))
