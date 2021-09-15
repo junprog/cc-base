@@ -62,7 +62,7 @@ class CountTrainer(Trainer):
         elif 'csrnet' in args.arch:
             self.model = CSRNet(in_ch=in_ch, up_scale=args.up_scale, pretrained=False)
         elif 'csr_iadm' in args.arch:
-            self.model = FusionCSRNet()
+            self.model = FusionCSRNet(batch_norm=True)
 
         self.model.to(self.device)
         print(self.model)
