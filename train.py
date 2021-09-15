@@ -16,18 +16,14 @@ def parse_args():
     parser.add_argument('--exp', default='',
                         help='result dir prefix')
     parser.add_argument('--device', default='0', help='assign device')
-    parser.add_argument('--gaussian-std', type=int, default=15,
-                        help='std of gaussian filter')
 
     # dataset
-    parser.add_argument('--dataset', default='shanghai-tech-rgbd',
+    parser.add_argument('--dataset', default='shanghai-tech-b',
                         help='select dataset [ucf-qnrf, st-a, st-b]')     
     parser.add_argument('--crop-size', type=int, default=512,
                         help='the crop size of the train image')
-    parser.add_argument('--rgb', action='store_true',
-                        help='use rgb images')
-    parser.add_argument('--depth', action='store_true',
-                        help='use depth images')
+    parser.add_argument('--sigma', type=int, default=15,
+                        help='a gaussian filter parameter')
 
     # dataloader
     parser.add_argument('--batch-size', type=int, default=8,
@@ -37,11 +33,13 @@ def parse_args():
 
     # model
     parser.add_argument('--arch', type=str, default='vgg19',
-                        help='the model architecture [vgg19, vgg19_bn, resnet16, resnet50, resnet101, csrnet, mcnn]')
+                        help='the model architecture [vgg19, vgg19_bn, resnet16, resnet50, resnet101, bagnet33, bagnet17, bagnet9]')
     parser.add_argument('--pool-num', type=int, default=3,
                         help='pool num')
     parser.add_argument('--up-scale', type=int, default=1,
-                        help='up scale num')               
+                        help='up scale num')          
+    parser.add_argument('--pretrained', action='store_true',
+                        help='use ImageNet pretrained model weights')
 
     # optimizer
     parser.add_argument('--lr', type=float, default=1e-5,
@@ -62,7 +60,7 @@ def parse_args():
     # epoch
     parser.add_argument('--max-epoch', type=int, default=301,
                         help='max training epoch')
-    parser.add_argument('--val-epoch', type=int, default=10,
+    parser.add_argument('--val-epoch', type=int, default=5,
                         help='the num of steps to log training information')
     parser.add_argument('--val-start', type=int, default=0,
                         help='the epoch start to val')

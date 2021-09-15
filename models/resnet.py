@@ -3,18 +3,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
 
+import math
+
 from collections import OrderedDict
 
 class ResNet(nn.Module):
-    def __init__(self, in_ch=3, pool_num=4, model='resnet50', up_scale=8, pretrained=False):
+    def __init__(self, in_ch=3, arch='resnet50', pool_num=4, up_scale=1, pretrained=False):
         super(ResNet, self).__init__()
         """
         feature_extracter : ResNetの最終fc層なくした事前学習モデル
         regresser : channel数を削減する (regressiion)
         """
 
-        self.feature_extracter = make_resnet_feature_extracter(model, pool_num, in_ch=in_ch, pretrained=pretrained)
-        self.regresser = make_resnet_regresser(model, pool_num)
+        self.feature_extracter = make_resnet_feature_extracter(arch, pool_num, in_ch=in_ch, pretrained=pretrained)
+        self.regresser = make_resnet_regresser(arch, pool_num)
 
         self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
         self.up_scale = up_scale
@@ -31,11 +33,11 @@ class ResNet(nn.Module):
         return torch.abs(x)
 
 
-def make_resnet_feature_extracter(model, pool_num, in_ch=3, pretrained=False):
-    if model == 'resnet18' or model == 'resnet34':
-        if model == 'resnet18':
+def make_resnet_feature_extracter(arch, pool_num, in_ch=3, pretrained=False):
+    if arch == 'resnet18' or arch == 'resnet34':
+        if arch == 'resnet18':
             model = models.resnet18(pretraineded=pretrained)
-        if model == 'resnet34':
+        if arch == 'resnet34':
             model = models.resnet34(pretraineded=pretrained)
 
         layers = list(model.children())[:-2]
@@ -51,10 +53,10 @@ def make_resnet_feature_extracter(model, pool_num, in_ch=3, pretrained=False):
                 extracter.add_module('layer{}'.format(i),layers[i+3])
 
     else:
-        if model == 'resnet50':
-            model = models.resnet50(pretraineded=pretrained)
-        elif model == 'resnet101':
-            model = models.resnet101(pretraineded=pretrained)
+        if arch == 'resnet50':
+            model = models.resnet50(pretrained=pretrained)
+        elif arch == 'resnet101':
+            model = models.resnet101(pretrained=pretrained)
 
         layers = list(model.children())[:-2]
 
@@ -79,8 +81,8 @@ def make_resnet_feature_extracter(model, pool_num, in_ch=3, pretrained=False):
 
     return extracter
 
-def make_resnet_regresser(model, pool_num):
-    if model == 'resnet18' or model == 'resnet34':
+def make_resnet_regresser(arch, pool_num):
+    if arch == 'resnet18' or arch == 'resnet34':
         base_ch = 64
         layers = []
 

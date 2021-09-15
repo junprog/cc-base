@@ -6,11 +6,13 @@ from utils.visualizer import Plotter
 from utils.helper import setlogger
 
 from datasets.shanghaitech_rgbd import ShanghaiTechRGBD
+from datasets.shanghaitech import ShanghaiTechA, ShanghaiTechB
 
 from models.vgg import VGG
 from models.resnet import ResNet
 from models.mcnn import MCNN
 from models.csrnet import CSRNet
+from models.bagnet import BagNet
 
 import argparse
 import logging
@@ -26,18 +28,16 @@ def parse_args():
     # dataset
     parser.add_argument('--dataset', default='shanghai-tech-rgbd',
                         help='select dataset [ucf-qnrf, rescale-ucf-qnrf, shanghai-tech-a, shanghai-tech-b]')
-    parser.add_argument('--rgb', action='store_true',
-                        help='use rgb images')
-    parser.add_argument('--depth', action='store_true',
-                        help='use depth images')
+    parser.add_argument('--sigma', type=int, default=15,
+                        help='a gaussian filter parameter')
 
     # model
     parser.add_argument('--arch', type=str, default='vgg19',
-                        help='the model architecture [vgg19, vgg19_bn, resnet16, resnet50, resnet101, csrnet, mcnn]')
+                        help='the model architecture [vgg19, vgg19_bn, resnet16, resnet50, resnet101, bagnet33, bagnet17, bagnet9]')
     parser.add_argument('--pool-num', type=int, default=3,
                         help='pool num')
     parser.add_argument('--up-scale', type=int, default=1,
-                        help='up scale num')            
+                        help='up scale num')
 
     args = parser.parse_args()
     return args
@@ -47,44 +47,60 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device.strip('-')  # set vis gpu
 
     setlogger(os.path.join(args.save_dir, 'test.log'))  # set logger
-    if args.rgb and args.depth:
-        mode = 'both'
-        in_ch = 4
-    elif args.rgb:
-        mode = 'rgb'
-        in_ch = 3
-    elif args.depth:
-        mode = 'depth'
-        in_ch = 1
 
     device = torch.device('cuda')
 
     if 'vgg19' in args.arch: 
-        model = VGG(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrained=False)
+        model = VGG(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=False)
     elif 'resnet' in args.arch:
-        model = ResNet(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrained=False)
+        model = ResNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=False)
+    elif 'bagnet' in args.arch:
+        model = BagNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=False)
+
     elif 'mcnn' in args.arch:
-        model = MCNN(in_ch=in_ch)
-        args.pool_num = 0
-        args.up_scale = 1
+        model = MCNN(in_ch=3, up_scale=args.up_scale)
     elif 'csrnet' in args.arch:
-        model = CSRNet(in_ch=in_ch, pretrained=False)
-        args.pool_num = 0
-        args.up_scale = 1
+        model = CSRNet(in_ch=3, up_scale=args.up_scale, pretrained=False)
 
     model.to(device)
     print(model)
     model.load_state_dict(torch.load(os.path.join(args.save_dir, 'best_model.pth'), device))
     model.eval()
 
-    datasets = ShanghaiTechRGBD(
-        json_path=os.path.join('json', args.dataset, 'test.json'),
-        dataset=args.dataset,
-        crop_size=None,
-        phase='test',
-        model_scale=2**3,
-        up_scale=1
-    )
+    if args.dataset == 'shanghai-tech-a':
+        datasets = ShanghaiTechA(
+            dataset=args.dataset,
+            arch=args.arch,
+            json_path=os.path.join('json', args.dataset, 'test.json'),
+            crop_size=None,
+            phase='test',
+            rescale=False,
+            sigma=args.sigma,
+            pool_num=args.pool_num,
+            up_scale=args.up_scale
+        )
+    
+    elif args.dataset == 'shanghai-tech-b':
+        datasets = ShanghaiTechB(
+            dataset=args.dataset,
+            arch=args.arch,
+            json_path=os.path.join('json', args.dataset, 'test.json'),
+            crop_size=None,
+            phase='test',
+            sigma=args.sigma,
+            pool_num=args.pool_num,
+            up_scale=args.up_scale
+        )
+
+    elif args.dataset == 'shanghai-tech-rgbd':
+        datasets = ShanghaiTechRGBD(
+            json_path=os.path.join('json', args.dataset, 'test.json'),
+            dataset=args.dataset,
+            crop_size=None,
+            phase='test',
+            model_scale=2**3,
+            up_scale=1
+        )
 
     dataloader = torch.utils.data.DataLoader(datasets, 1, shuffle=False, num_workers=8, pin_memory=False)
 
@@ -95,18 +111,11 @@ if __name__ == '__main__':
     top_str = 'path\titr\tdiff\tgt_num\testimate'
     logging.info(top_str)
     # Iterate over data.
-    for steps, (image, depth, target, num, path) in enumerate(dataloader):
+    for steps, (image, target, num, path) in enumerate(dataloader):
 
         tmp_res = 0
-        if mode == 'rgb':
-            inputs = image.to(device)
 
-        elif mode == 'depth':
-            inputs = depth.to(device)
-
-        elif mode == 'both':
-            inputs = torch.cat([image, depth], dim=1)
-            inputs = inputs.to(device)
+        inputs = image.to(device)
 
         # inputs are images with different sizes
         assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'

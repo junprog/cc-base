@@ -6,16 +6,16 @@ import torchvision.models as models
 from collections import OrderedDict
 
 class VGG(nn.Module):
-    def __init__(self, in_ch=3, pool_num=3, model='vgg19_bn', up_scale=8, pretrained=False):
+    def __init__(self, in_ch=3, arch='vgg19_bn', pool_num=3, up_scale=1, pretrained=False):
         super(VGG, self).__init__()
         """
         feature_extracter : VGGの最終fc層なくした事前学習モデル
         regresser : channel数を削減する (regressiion)
         """
-        if model == 'vgg19':
+        if arch == 'vgg19':
             self.feature_extracter = make_vgg19_feature_extracter(pool_num, in_ch=in_ch, bn=False, pretrained=pretrained)
             self.regresser = make_vgg_regresser()
-        elif model == 'vgg19_bn':
+        elif arch == 'vgg19_bn':
             self.feature_extracter = make_vgg19_feature_extracter(pool_num, in_ch=in_ch, bn=True, pretrained=pretrained)
             self.regresser = make_vgg_regresser()
 

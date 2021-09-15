@@ -1,5 +1,6 @@
 # code refer to https://github.com/ZhihengCV/Bayesian-Crowd-Counting/blob/master/utils/regression_trainer.py
 import argparse
+from models.bagnet import BagNet
 import os
 from re import S
 import time
@@ -25,7 +26,6 @@ from models.vgg import VGG
 from models.resnet import ResNet
 from models.mcnn import MCNN
 from models.csrnet import CSRNet
-from models.csrnet_iadm import FusionCSRNet
 
 class CountTrainer(Trainer):
     def setup(self):
@@ -35,17 +35,6 @@ class CountTrainer(Trainer):
         self.tr_graph = GraphPlotter(self.save_dir, ['MAE', 'MSE'], 'train')
         self.vl_graph = GraphPlotter(self.save_dir, ['MAE', 'MSE'], 'val')
 
-        crop_size = (args.crop_size, args.crop_size)
-        if args.rgb and args.depth:
-            self.mode = 'both'
-            in_ch = 4
-        elif args.rgb:
-            self.mode = 'rgb'
-            in_ch = 3
-        elif args.depth:
-            self.mode = 'depth'
-            in_ch = 1
-
         if torch.cuda.is_available():
             self.device = torch.device("cuda")
             self.device_count = torch.cuda.device_count()
@@ -54,45 +43,47 @@ class CountTrainer(Trainer):
             raise Exception("gpu is not available")
 
         if 'vgg19' in args.arch: 
-            self.model = VGG(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrained=False)
+            self.model = VGG(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
         elif 'resnet' in args.arch:
-            self.model = ResNet(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrained=False)
+            self.model = ResNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
+        elif 'bagnet' in args.arch:
+            self.model = BagNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
+
         elif 'mcnn' in args.arch:
-            self.model = MCNN(in_ch=in_ch, up_scale=args.up_scale)
+            self.model = MCNN(in_ch=3, up_scale=args.up_scale)
         elif 'csrnet' in args.arch:
-            self.model = CSRNet(in_ch=in_ch, up_scale=args.up_scale, pretrained=False)
-        elif 'csr_iadm' in args.arch:
-            self.model = FusionCSRNet(batch_norm=True)
+            self.model = CSRNet(in_ch=3, up_scale=args.up_scale, pretrained=args.pretrained)
 
         self.model.to(self.device)
         print(self.model)
 
         if 'shanghai-tech-rgbd' == args.dataset:
-            self.datasets = {x: ShanghaiTechRGBD(
-                dataset=args.dataset,
-                json_path=os.path.join('json', args.dataset, x +'.json'),
-                crop_size=crop_size,
-                phase=x,
-                model_scale=2 ** args.pool_num,
-                up_scale=args.up_scale
-            ) for x in ['train', 'val']}
+            raise NotImplementedError()
+
         elif 'shanghai-tech-a' == args.dataset:
+            crop_size = (args.crop_size, args.crop_size)
             self.datasets = {x: ShanghaiTechA(
                 dataset=args.dataset,
+                arch=args.arch,
                 json_path=os.path.join('json', args.dataset, x +'.json'),
                 crop_size=crop_size,
                 phase=x,
                 rescale=False,
-                model_scale=2 ** args.pool_num,
+                sigma=args.sigma,
+                pool_num=args.pool_num,
                 up_scale=args.up_scale
             ) for x in ['train', 'val']}
+
         elif 'shanghai-tech-b' == args.dataset:
+            crop_size = (768, 1024)
             self.datasets = {x: ShanghaiTechB(
                 dataset=args.dataset,
+                arch=args.arch,
                 json_path=os.path.join('json', args.dataset, x +'.json'),
                 crop_size=crop_size,
                 phase=x,
-                model_scale=2 ** args.pool_num,
+                sigma=args.sigma,
+                pool_num=args.pool_num,
                 up_scale=args.up_scale
             ) for x in ['train', 'val']}
 
@@ -109,7 +100,8 @@ class CountTrainer(Trainer):
 
         #args.weight_decay = 5*1e-4
         self.optimizer = optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-        self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[int(args.max_epoch / 2)], gamma=0.1)
+        #self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[int(args.max_epoch / 2)], gamma=0.1)
+        self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[51, 101, 151, 201, 251, ], gamma=0.1)
         #self.scheduler = None
 
         self.start_epoch = 0
@@ -150,21 +142,8 @@ class CountTrainer(Trainer):
         plotter = Plotter(self.args, 4, save_dir=self.save_dir)
 
         # Iterate over data.
-        for steps, (image, depth, target, num, _) in enumerate(tqdm(self.dataloaders['train'], ncols=100)):
-
-            if self.mode == 'rgb':
-                inputs = image.to(self.device)
-
-            elif self.mode == 'depth':
-                inputs = depth.to(self.device)
-
-            # elif self.mode == 'both':
-            #     inputs = [image.to(self.device), depth.to(self.device)]
-            
-            elif self.mode == 'both':
-                inputs = torch.cat([image, depth], dim=1)
-                inputs = inputs.to(self.device)
-            
+        for steps, (image, target, num, _) in enumerate(tqdm(self.dataloaders['train'], ncols=100)):
+            inputs = image.to(self.device)
             target = target.to(self.device)
 
             with torch.set_grad_enabled(True):
@@ -213,25 +192,13 @@ class CountTrainer(Trainer):
         plotter = Plotter(self.args, 1, save_dir=self.save_dir)
 
         # Iterate over data.
-        for steps, (image, depth, target, num, _) in enumerate(tqdm(self.dataloaders['val'], ncols=100)):
+        for steps, (image, target, num, _) in enumerate(tqdm(self.dataloaders['val'], ncols=100)):
 
             tmp_res = 0
-            if self.mode == 'rgb':
-                inputs = image.to(self.device)
-
-            elif self.mode == 'depth':
-                inputs = depth.to(self.device)
-
-            # elif self.mode == 'both':
-            #     inputs = [image.to(self.device), depth.to(self.device)]
-
-            elif self.mode == 'both':
-                inputs = torch.cat([image, depth], dim=1)
-                inputs = inputs.to(self.device)
+            inputs = image.to(self.device)
 
             # inputs are images with different sizes
             assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'
-            #assert inputs[0].size(0) == 1, 'the batch size should equal to 1 in validation mode'
             with torch.set_grad_enabled(False):
                 outputs = self.model(inputs)
                 tmp_res += torch.sum(outputs).item()
