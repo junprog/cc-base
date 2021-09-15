@@ -158,12 +158,12 @@ class CountTrainer(Trainer):
             elif self.mode == 'depth':
                 inputs = depth.to(self.device)
 
-            elif self.mode == 'both':
-                inputs = [image.to(self.device), depth.to(self.device)]
-            
             # elif self.mode == 'both':
-            #     inputs = torch.cat([image, depth], dim=1)
-            #     inputs = inputs.to(self.device)
+            #     inputs = [image.to(self.device), depth.to(self.device)]
+            
+            elif self.mode == 'both':
+                inputs = torch.cat([image, depth], dim=1)
+                inputs = inputs.to(self.device)
             
             target = target.to(self.device)
 
@@ -222,12 +222,12 @@ class CountTrainer(Trainer):
             elif self.mode == 'depth':
                 inputs = depth.to(self.device)
 
-            elif self.mode == 'both':
-                inputs = [image.to(self.device), depth.to(self.device)]
-
             # elif self.mode == 'both':
-            #     inputs = torch.cat([image, depth], dim=1)
-            #     inputs = inputs.to(self.device)
+            #     inputs = [image.to(self.device), depth.to(self.device)]
+
+            elif self.mode == 'both':
+                inputs = torch.cat([image, depth], dim=1)
+                inputs = inputs.to(self.device)
 
             # inputs are images with different sizes
             assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'

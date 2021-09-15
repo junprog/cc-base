@@ -1,0 +1,1 @@
+python train.py --save-dir /mnt/hdd02/res-rgbd --exp exp03-1-scratch --arch vgg19_bn --pool-num 3 --up-scale 1 --depth --rgb
