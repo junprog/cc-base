@@ -34,6 +34,7 @@ class CountTrainer(Trainer):
         self.loss_graph = GraphPlotter(self.save_dir, ['Loss'], 'loss')
         self.tr_graph = GraphPlotter(self.save_dir, ['MAE', 'MSE'], 'train')
         self.vl_graph = GraphPlotter(self.save_dir, ['MAE', 'MSE'], 'val')
+        self.test_graph = GraphPlotter(self.save_dir, ['MAE', 'MSE'], 'test')
 
         if torch.cuda.is_available():
             self.device = torch.device("cuda")
@@ -72,7 +73,7 @@ class CountTrainer(Trainer):
                 sigma=args.sigma,
                 pool_num=args.pool_num,
                 up_scale=args.up_scale
-            ) for x in ['train', 'val']}
+            ) for x in ['train', 'val', 'test']}
 
         elif 'shanghai-tech-b' == args.dataset:
             crop_size = (768, 1024)
@@ -85,7 +86,7 @@ class CountTrainer(Trainer):
                 sigma=args.sigma,
                 pool_num=args.pool_num,
                 up_scale=args.up_scale
-            ) for x in ['train', 'val']}
+            ) for x in ['train', 'val', 'test']}
 
         self.dataloaders = {x: DataLoader(self.datasets[x],
             batch_size=(args.batch_size if x == 'train' else 1),
@@ -93,7 +94,7 @@ class CountTrainer(Trainer):
             num_workers=args.num_workers*self.device_count,
             pin_memory=(True if x == 'train' else False),
             worker_init_fn=worker_init_fn
-        ) for x in ['train', 'val']}
+        ) for x in ['train', 'val', 'test']}
 
         self.criterion = nn.MSELoss()
         self.criterion.to(self.device)
@@ -116,8 +117,12 @@ class CountTrainer(Trainer):
                 self.model.load_state_dict(torch.load(args.resume, self.device))
 
         self.save_list = Save_Handle(max_num=args.max_model_num)
-        self.best_mae = np.inf
-        self.best_mse = np.inf
+
+        self.val_best_mae = np.inf
+        self.val_best_mse = np.inf
+
+        self.test_best_mae = np.inf
+        self.test_best_mse = np.inf
 
     def train(self):
         """training process"""
@@ -128,6 +133,7 @@ class CountTrainer(Trainer):
             self.train_eopch()
             if epoch % args.val_epoch == 0 and epoch >= args.val_start:
                 self.val_epoch()
+                self.test_epoch()
 
             if self.scheduler is not None:
                 self.scheduler.step()
@@ -219,10 +225,53 @@ class CountTrainer(Trainer):
         self.vl_graph(self.epoch, [mae, mse])
 
         model_state_dic = self.model.state_dict()
-        if (2.0 * mse + mae) < (2.0 * self.best_mse + self.best_mae):
-            self.best_mse = mse
-            self.best_mae = mae
-            logging.info("save best mse {:.2f} mae {:.2f} model epoch {}".format(self.best_mse,
-                                                                                 self.best_mae,
+        if (2.0 * mse + mae) < (2.0 * self.val_best_mse + self.val_best_mae):
+            self.val_best_mse = mse
+            self.val_best_mae = mae
+            logging.info("save best mse {:.2f} mae {:.2f} model epoch {}".format(self.val_best_mse,
+                                                                                 self.val_best_mae,
                                                                                  self.epoch))
-            torch.save(model_state_dic, os.path.join(self.save_dir, 'best_model.pth'))
+            torch.save(model_state_dic, os.path.join(self.save_dir, 'val_best_model.pth'))
+
+    def test_epoch(self):
+        epoch_start = time.time()
+        self.model.eval()  # Set model to evaluate mode
+        epoch_res = []
+
+        plotter = Plotter(self.args, 1, save_dir=self.save_dir)
+
+        # Iterate over data.
+        for steps, (image, target, num, _) in enumerate(tqdm(self.dataloaders['test'], ncols=100)):
+
+            tmp_res = 0
+            inputs = image.to(self.device)
+
+            # inputs are images with different sizes
+            assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'
+            with torch.set_grad_enabled(False):
+                outputs = self.model(inputs)
+                tmp_res += torch.sum(outputs).item()
+
+            res = num[0].item() - tmp_res
+            epoch_res.append(res)
+
+            if steps == 0:
+                plotter(self.epoch, inputs, outputs, target, 'test', num)
+                #plotter(self.epoch, inputs[0], outputs, target, 'vl', num)
+
+        epoch_res = np.array(epoch_res)
+        mse = np.sqrt(np.mean(np.square(epoch_res)))
+        mae = np.mean(np.abs(epoch_res))
+        logging.info('Epoch {} Test, MSE: {:.2f} MAE: {:.2f}, Cost {:.1f} sec'
+                     .format(self.epoch, mse, mae, time.time()-epoch_start))
+
+        self.test_graph(self.epoch, [mae, mse])
+
+        model_state_dic = self.model.state_dict()
+        if (2.0 * mse + mae) < (2.0 * self.test_best_mse + self.test_best_mae):
+            self.test_best_mse = mse
+            self.test_best_mae = mae
+            logging.info("save best mse {:.2f} mae {:.2f} model epoch {}".format(self.test_best_mse,
+                                                                                 self.test_best_mae,
+                                                                                 self.epoch))
+            torch.save(model_state_dic, os.path.join(self.save_dir, 'test_best_model.pth'))
