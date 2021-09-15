@@ -39,7 +39,6 @@ if __name__ == '__main__':
     args = parse_args()
     
     dataset = judge_dataset(args.data_dir)
-    output_dir_sufix = '_den_{}'.format(args.sigma)
 
     phases = ['train', 'test']
     for phase in phases:
@@ -49,7 +48,7 @@ if __name__ == '__main__':
         phase_dirname = os.path.join(args.data_dir, image_dirname)
         image_path_list = glob.glob(os.path.join(phase_dirname, image_format))
 
-        if dataset == 'shanghai-tech-a' or dataset == 'shanghai-tech-b':
+        if dataset == 'shanghai-tech-a' or dataset == 'shanghai-tech-b' or dataset == 'shanghai-tech-rgbd':
             phase_dirname = os.path.dirname(phase_dirname)
 
         for im_path in tqdm(image_path_list, ncols=60):
@@ -64,7 +63,7 @@ if __name__ == '__main__':
             if dataset == 'shanghai-tech-a' or dataset == 'shanghai-tech-b':
                 save_foldername = 'den_' + str(args.sigma)
             elif dataset == 'shanghai-tech-rgbd':
-                save_foldername = phase + '_den_' + str(args.sigma)
+                save_foldername = phase + '_density_' + str(args.sigma)
             elif dataset == 'ucf-qnrf':
                 save_foldername = ''
 
@@ -75,7 +74,7 @@ if __name__ == '__main__':
             if dataset == 'ucf-qnrf':
                 np_gt_path = os.path.join(save_path, os.path.basename(gt_path.replace('ann.mat', 'den.npy')))
             else:
-                np_gt_path = os.path.join(save_path, os.path.basename(gt_path.replace('.mat', '.npy')))
+                np_gt_path = os.path.join(save_path, os.path.basename(gt_path.replace('GT', 'DENSITY').replace('.mat', '.npy')))
 
             np.save(np_gt_path, density)
 

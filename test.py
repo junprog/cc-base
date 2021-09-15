@@ -60,9 +60,9 @@ if __name__ == '__main__':
     device = torch.device('cuda')
 
     if 'vgg19' in args.arch: 
-        model = VGG(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrain=False)
+        model = VGG(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrained=False)
     elif 'resnet' in args.arch:
-        model = ResNet(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrain=False)
+        model = ResNet(in_ch=in_ch, pool_num=args.pool_num, model=args.arch, up_scale=args.up_scale, pretrained=False)
     elif 'mcnn' in args.arch:
         model = MCNN(in_ch=in_ch)
         args.pool_num = 0

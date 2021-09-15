@@ -150,7 +150,7 @@ def create_gt_path(image_path, dataset, phase) -> str:
             gt_path = image_path.replace('.jpg','.mat').replace('images','ground_truth').replace('IMG_','GT_IMG_')
 
         if dataset == 'shanghai-tech-rgbd':
-            gt_path = image_path.replace('img/IMG', 'gt/GT').replace('.png','.mat')
+            gt_path = image_path.replace('img', 'gt').replace('IMG', 'GT').replace('.png','.mat')
 
     elif phase == 'test':
         if dataset == 'ucf-qnrf':
@@ -160,7 +160,7 @@ def create_gt_path(image_path, dataset, phase) -> str:
             gt_path = image_path.replace('.jpg','.mat').replace('images','ground_truth').replace('IMG_','GT_IMG_')
 
         if dataset == 'shanghai-tech-rgbd':
-            gt_path = image_path.replace('img/IMG', 'gt_np/GT').replace('.png','.npy')
+            gt_path = image_path.replace('img', 'gt_np').replace('IMG', 'GT').replace('.png','.npy')
     
     return gt_path
 
@@ -183,7 +183,7 @@ def create_density_path(image_path, dataset, phase) -> str:
             density_path = image_path.replace('.jpg','.npy').replace('images', 'den_15').replace('IMG_','GT_IMG_')
 
         if dataset == 'shanghai-tech-rgbd':
-            density_path = image_path.replace('train_img/IMG', 'train_den_15/GT').replace('.png','.npy')
+            density_path = image_path.replace('train_img', 'train_density_15').replace('IMG', 'DENSITY').replace('.png','.npy')
     
     elif phase == 'test':
         if dataset == 'ucf-qnrf':
@@ -193,7 +193,7 @@ def create_density_path(image_path, dataset, phase) -> str:
             density_path = image_path.replace('.jpg','.npy').replace('images', 'den_15').replace('IMG_','GT_IMG_')
 
         if dataset == 'shanghai-tech-rgbd':
-            density_path = image_path.replace('test_img/IMG', 'test_den_15/GT').replace('.png','.npy')
+            density_path = image_path.replace('test_img', 'test_density_15').replace('IMG', 'DENSITY').replace('.png','.npy')
 
     return density_path
 
@@ -203,12 +203,12 @@ def create_depth_path(image_path, dataset, phase) -> str:
     if phase == 'train' or phase == 'val':
         # /mnt/hdd02/ShanghaiTechRGBD/train_data/train_img/IMG_0000.png
         # /mnt/hdd02/ShanghaiTechRGBD/train_data/train_depth/DEPTH_0000.mat
-        depth_path = image_path.replace('train_img/IMG', 'train_depth/DEPTH').replace('.png','.mat')
+        depth_path = image_path.replace('train_img', 'train_depth').replace('IMG', 'DEPTH').replace('.png','.mat')
 
     elif phase == 'test':
         # /mnt/hdd02/ShanghaiTechRGBD/test_data/test_img/IMG_0000.png
         # /mnt/hdd02/ShanghaiTechRGBD/test_data/test_depth/DEPTH_0000.mat
-        depth_path = image_path.replace('test_img/IMG', 'test_depth/DEPTH').replace('.png','.mat')
+        depth_path = image_path.replace('test_img', 'test_depth').replace('IMG', 'DEPTH').replace('.png','.mat')
     
     return depth_path
 

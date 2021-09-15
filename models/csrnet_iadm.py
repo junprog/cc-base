@@ -4,17 +4,17 @@ import torch.nn.functional as F
 
 
 class FusionCSRNet(nn.Module):
-    def __init__(self, pretrained=False, ratio=0.7):
+    def __init__(self, pretrained=False, batch_norm=False, ratio=0.7):
         super(FusionCSRNet, self).__init__()
         self.seen = 0
 
-        self.block1 = Block([int(64*ratio), int(64*ratio), 'M'], first_block=True)
-        self.block2 = Block([int(128*ratio), int(128*ratio), 'M'], in_channels=int(64*ratio))
-        self.block3 = Block([int(256*ratio), int(256*ratio), int(256*ratio), 'M'], in_channels=int(128*ratio))
-        self.block4 = Block([int(512*ratio), int(512*ratio), int(512*ratio)], in_channels=int(256*ratio))
+        self.block1 = Block([int(64*ratio), int(64*ratio), 'M'], first_block=True, batch_norm=batch_norm)
+        self.block2 = Block([int(128*ratio), int(128*ratio), 'M'], in_channels=int(64*ratio), batch_norm=batch_norm)
+        self.block3 = Block([int(256*ratio), int(256*ratio), int(256*ratio), 'M'], in_channels=int(128*ratio), batch_norm=batch_norm)
+        self.block4 = Block([int(512*ratio), int(512*ratio), int(512*ratio)], in_channels=int(256*ratio), batch_norm=batch_norm)
 
         self.backend_feat = [int(512*ratio), int(512*ratio), int(512*ratio), int(256*ratio), int(128*ratio), 64]
-        self.backend = make_layers(self.backend_feat, in_channels=int(512*ratio), d_rate=2)
+        self.backend = make_layers(self.backend_feat, in_channels=int(512*ratio), batch_norm=batch_norm, d_rate=2)
 
         self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
 
@@ -54,7 +54,7 @@ class FusionCSRNet(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, cfg, in_channels=3, first_block=False, dilation_rate=1):
+    def __init__(self, cfg, in_channels=3, first_block=False, dilation_rate=1, batch_norm=False):
         super(Block, self).__init__()
         self.seen = 0
         self.first_block = first_block
@@ -67,10 +67,10 @@ class Block(nn.Module):
             rgb_in_channels = in_channels
             t_in_channels = in_channels
 
-        self.rgb_conv = make_layers(cfg, in_channels=rgb_in_channels, d_rate=self.d_rate)
-        self.t_conv = make_layers(cfg, in_channels=t_in_channels, d_rate=self.d_rate)
+        self.rgb_conv = make_layers(cfg, in_channels=rgb_in_channels, batch_norm=batch_norm, d_rate=self.d_rate)
+        self.t_conv = make_layers(cfg, in_channels=t_in_channels, batch_norm=batch_norm, d_rate=self.d_rate)
         if first_block is False:
-            self.shared_conv = make_layers(cfg, in_channels=in_channels, d_rate=self.d_rate)
+            self.shared_conv = make_layers(cfg, in_channels=in_channels, batch_norm=batch_norm, d_rate=self.d_rate)
 
         channels = cfg[0]
         self.rgb_msc = MSC(channels)
