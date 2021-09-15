@@ -92,10 +92,10 @@ if __name__ == '__main__':
 
     plotter = Plotter(args, 4, save_dir=args.save_dir)
 
-    top_str = 'itr\tdiff\tgt_num\testimate'
+    top_str = 'path\titr\tdiff\tgt_num\testimate'
     logging.info(top_str)
     # Iterate over data.
-    for steps, (image, depth, target, num) in enumerate(dataloader):
+    for steps, (image, depth, target, num, path) in enumerate(dataloader):
 
         tmp_res = 0
         if mode == 'rgb':
@@ -118,7 +118,7 @@ if __name__ == '__main__':
             plotter(steps, inputs, outputs[0], target[0], 'test', num)
 
         temp_minu = num[0].item() - tmp_res
-        logging.info('{}/{}\t{}\t{}\t{}'.format(steps, len(dataloader), temp_minu, num[0].item(), tmp_res))
+        logging.info('{}\t{}/{}\t{}\t{}\t{}'.format(path, steps, len(dataloader), temp_minu, num[0].item(), tmp_res))
         epoch_minus.append(temp_minu)
 
     epoch_minus = np.array(epoch_minus)

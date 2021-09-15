@@ -102,7 +102,7 @@ class ShanghaiTechRGBD(data.Dataset):
             depth = self.depth_trans(np.array(depth))
             target = self.to_tensor(np.array(density))
             
-            return image, depth, target, num
+            return image, depth, target, num, img_path
 
         elif self.phase == 'val' or self.phase == 'test':
             gt_path = create_gt_path(img_path, self.dataset, self.phase)
@@ -125,7 +125,7 @@ class ShanghaiTechRGBD(data.Dataset):
             depth = self.depth_trans(np.array(depth))
             target = self.to_tensor(np.array(density))
 
-            return image, depth, target, num
+            return image, depth, target, num, img_path
 
     def _random_crop(self, image, gt_map, depth):
         ## ランダムクロップのパラメタライズ(クロップ座標を画像とGTマップで固定するため)

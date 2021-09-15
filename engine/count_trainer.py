@@ -150,7 +150,7 @@ class CountTrainer(Trainer):
         plotter = Plotter(self.args, 4, save_dir=self.save_dir)
 
         # Iterate over data.
-        for steps, (image, depth, target, num) in enumerate(tqdm(self.dataloaders['train'], ncols=100)):
+        for steps, (image, depth, target, num, _) in enumerate(tqdm(self.dataloaders['train'], ncols=100)):
 
             if self.mode == 'rgb':
                 inputs = image.to(self.device)
@@ -213,7 +213,7 @@ class CountTrainer(Trainer):
         plotter = Plotter(self.args, 1, save_dir=self.save_dir)
 
         # Iterate over data.
-        for steps, (image, depth, target, num) in enumerate(tqdm(self.dataloaders['val'], ncols=100)):
+        for steps, (image, depth, target, num, _) in enumerate(tqdm(self.dataloaders['val'], ncols=100)):
 
             tmp_res = 0
             if self.mode == 'rgb':
