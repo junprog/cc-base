@@ -174,6 +174,7 @@ class BagResNet(nn.Module):
         if self.pool_num == 5:
             share_x_4 = self.share_layer4(bag_x_4, res_x_4, share_x_3)
             x = self.regresser(share_x_4)
+        x = self.output_layer(x)
             
         return torch.abs(x)
 
