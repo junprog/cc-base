@@ -8,8 +8,12 @@ downfactor_dict = {
     'resnet50': {'kernel':[7,3,3,3,3],'stride':[2,2,2,2,2],'padding':[3,1,1,1,1]},
     'bagnet33': {'kernel':[3,3,3,3,3],'stride':[1,2,2,2,1],'padding':[0,0,0,0,0]},
     'bagnet17': {'kernel':[3,3,3,3,1],'stride':[1,2,2,2,1],'padding':[0,0,0,0,0]},
-    'bagnet9': {'kernel':[3,3,3,1,1],'stride':[1,2,2,2,1],'padding':[0,0,0,0,0]}
+    'bagnet9': {'kernel':[3,3,3,1,1],'stride':[1,2,2,2,1],'padding':[0,0,0,0,0]},
 }
+
+def calc_layer_out_size(size, idx, arch):
+    out_size = math.floor(((size - downfactor_dict[arch]['kernel'][idx] + 2*downfactor_dict[arch]['padding'][idx]) / downfactor_dict[arch]['stride'][idx]) + 1)
+    return out_size
 
 def calc_out_size(arch: str, in_size: tuple, pool_num: int, up_scale: int):
     """
@@ -18,10 +22,26 @@ def calc_out_size(arch: str, in_size: tuple, pool_num: int, up_scale: int):
     """
     w, h = in_size
 
-    for i in range(0, pool_num):
-        if i < pool_num:
-            w = math.floor(((w - downfactor_dict[arch]['kernel'][i] + 2*downfactor_dict[arch]['padding'][i]) / downfactor_dict[arch]['stride'][i]) + 1)
-            h = math.floor(((h - downfactor_dict[arch]['kernel'][i] + 2*downfactor_dict[arch]['padding'][i]) / downfactor_dict[arch]['stride'][i]) + 1)
+    if arch == 'fusionnet':
+        bag_w = w
+        res_w = w
+        bag_h = h
+        res_h = h
+        for i in range(0, pool_num):
+            if i < pool_num:
+                bag_w = calc_layer_out_size(bag_w, i, 'bagnet33')
+                res_w = calc_layer_out_size(res_w, i, 'resnet50')
+                bag_h = calc_layer_out_size(bag_h, i, 'bagnet33')
+                res_h = calc_layer_out_size(res_h, i, 'resnet50')                
+                if i > 0:
+                    w = int((bag_w + res_w) / 2)
+                    h = int((bag_h + res_h) / 2)
+
+    else:
+        for i in range(0, pool_num):
+            if i < pool_num:
+                w = calc_layer_out_size(w, i, arch)
+                h = calc_layer_out_size(h, i, arch)
 
     out_size = (w*up_scale, h*up_scale)
     return out_size
@@ -39,8 +59,8 @@ def calc_scale_factor(in_size: tuple, out_size: tuple):
 
 if __name__ == '__main__':
     in_size = (512, 512)
-    arch = 'vgg19'
-    pool_num = 3
+    arch = 'fusionnet'
+    pool_num = 4
     up_scale = 1
 
     out_size = calc_out_size(arch, in_size, pool_num, up_scale)
