@@ -1,6 +1,5 @@
 # code refer to https://github.com/ZhihengCV/Bayesian-Crowd-Counting/blob/master/utils/regression_trainer.py
 import argparse
-from models.bagnet import BagNet
 import os
 from re import S
 import time
@@ -26,6 +25,8 @@ from models.vgg import VGG
 from models.resnet import ResNet
 from models.mcnn import MCNN
 from models.csrnet import CSRNet
+from models.bagnet import BagNet
+from models.bag_csrnet import BagCSRNet
 
 class CountTrainer(Trainer):
     def setup(self):
@@ -48,6 +49,8 @@ class CountTrainer(Trainer):
             self.model = ResNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
         elif 'bagnet' in args.arch:
             self.model = BagNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
+        elif 'bag_csrnet' in args.arch:
+            self.model = BagCSRNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
 
         elif 'mcnn' in args.arch:
             self.model = MCNN(in_ch=3, up_scale=args.up_scale)

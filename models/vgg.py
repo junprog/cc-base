@@ -6,7 +6,7 @@ import torchvision.models as models
 from collections import OrderedDict
 
 class VGG(nn.Module):
-    def __init__(self, in_ch=3, arch='vgg19_bn', pool_num=3, up_scale=1, pretrained=False):
+    def __init__(self, in_ch=3, arch='vgg19_bn', pool_num=4, up_scale=1, pretrained=False):
         super(VGG, self).__init__()
         """
         feature_extracter : VGGの最終fc層なくした事前学習モデル

@@ -8,7 +8,7 @@ import math
 from collections import OrderedDict
 
 class ResNet(nn.Module):
-    def __init__(self, in_ch=3, arch='resnet50', pool_num=4, up_scale=1, pretrained=False):
+    def __init__(self, in_ch=3, arch='resnet50', pool_num=5, up_scale=1, pretrained=False):
         super(ResNet, self).__init__()
         """
         feature_extracter : ResNetの最終fc層なくした事前学習モデル
