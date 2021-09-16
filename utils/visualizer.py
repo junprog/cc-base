@@ -120,6 +120,10 @@ class Plotter:
         
         plt.tight_layout()
         output_img_name = self.opts.dataset + '_{}_{}.png'.format(phase, epoch)
+
+        if not os.path.exists(os.path.join(self.save_dir, 'images')):
+            os.mkdir(os.path.join(self.save_dir, 'images'))
+            
         plt.savefig(os.path.join(self.save_dir, 'images', output_img_name))
         plt.close()
   
