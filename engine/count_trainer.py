@@ -26,6 +26,7 @@ from models.vgg import VGG
 from models.resnet import ResNet
 from models.mcnn import MCNN
 from models.csrnet import CSRNet
+from models.fusion_model import BagResNet
 
 class CountTrainer(Trainer):
     def setup(self):
@@ -49,6 +50,8 @@ class CountTrainer(Trainer):
             self.model = ResNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
         elif 'bagnet' in args.arch:
             self.model = BagNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
+        elif 'fusionnet' in args.arch:
+            self.model = BagResNet(pool_num=args.pool_num, pretrained=args.pretrained)
 
         elif 'mcnn' in args.arch:
             self.model = MCNN(in_ch=3, up_scale=args.up_scale)
@@ -58,11 +61,12 @@ class CountTrainer(Trainer):
         self.model.to(self.device)
         print(self.model)
 
+        crop_size = (args.crop_size, args.crop_size)
+
         if 'shanghai-tech-rgbd' == args.dataset:
             raise NotImplementedError()
 
         elif 'shanghai-tech-a' == args.dataset:
-            crop_size = (args.crop_size, args.crop_size)
             self.datasets = {x: ShanghaiTechA(
                 dataset=args.dataset,
                 arch=args.arch,
@@ -76,7 +80,7 @@ class CountTrainer(Trainer):
             ) for x in ['train', 'val', 'test']}
 
         elif 'shanghai-tech-b' == args.dataset:
-            crop_size = (768, 1024)
+            #crop_size = (768, 1024)
             self.datasets = {x: ShanghaiTechB(
                 dataset=args.dataset,
                 arch=args.arch,
@@ -102,7 +106,7 @@ class CountTrainer(Trainer):
         #args.weight_decay = 5*1e-4
         self.optimizer = optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         #self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[int(args.max_epoch / 2)], gamma=0.1)
-        self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[51, 101, 151, 201, 251, ], gamma=0.1)
+        self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[51, 101, 151], gamma=0.1)
         #self.scheduler = None
 
         self.start_epoch = 0
