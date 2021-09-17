@@ -67,7 +67,8 @@ if __name__ == '__main__':
 
     model.to(device)
     print(model)
-    model.load_state_dict(torch.load(os.path.join(args.save_dir, 'best_model.pth'), device))
+    #model.load_state_dict(torch.load(os.path.join(args.save_dir, 'best_model.pth'), device))
+    model.load_state_dict(torch.load(os.path.join(args.save_dir, '200_ckpt.tar'), device)['model_state_dict'])
     model.eval()
 
     if args.dataset == 'shanghai-tech-a':
