@@ -7,6 +7,7 @@ from utils.helper import setlogger
 
 from datasets.shanghaitech_rgbd import ShanghaiTechRGBD
 from datasets.shanghaitech import ShanghaiTechA, ShanghaiTechB
+from datasets.ucf_qnrf import UCF_QNRF
 
 from models.vgg import VGG
 from models.resnet import ResNet
@@ -100,6 +101,19 @@ if __name__ == '__main__':
             phase='test',
             model_scale=2**3,
             up_scale=1
+        )
+
+    elif args.dataset == 'ucf-qnrf':
+        datasets = UCF_QNRF(
+            dataset=args.dataset,
+            arch=args.arch,
+            json_path=os.path.join('json', args.dataset, 'test.json'),
+            crop_size=None,
+            phase='test',
+            rescale=False,
+            sigma=args.sigma,
+            pool_num=args.pool_num,
+            up_scale=args.up_scale
         )
 
     dataloader = torch.utils.data.DataLoader(datasets, 1, shuffle=False, num_workers=8, pin_memory=False)

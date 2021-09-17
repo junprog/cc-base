@@ -2,11 +2,10 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 
-
 import sys
 import os
 current_path = os.getcwd()
-sys.path.append(current_path) # /plant-record/ ディレクトリをパスに追加
+sys.path.append(current_path)
 from models.bagnet import BagNet
 from models.resnet import ResNet
 

@@ -26,6 +26,7 @@ from models.resnet import ResNet
 from models.mcnn import MCNN
 from models.csrnet import CSRNet
 from models.bagnet import BagNet
+from models.vgg_bagnet import VGG_BagNet
 from models.fusion_model import BagResNet
 
 class CountTrainer(Trainer):
@@ -43,13 +44,19 @@ class CountTrainer(Trainer):
         else:
             raise Exception("gpu is not available")
 
-        if 'vgg19' in args.arch: 
+        if args.arch == 'vgg19' or args.arch == 'vgg19_bn': 
             self.model = VGG(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
-        elif 'resnet' in args.arch:
+
+        elif args.arch == 'resnet50':
             self.model = ResNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
-        elif 'bagnet' in args.arch:
+
+        elif args.arch == 'vgg19_bag' or args.arch == 'vgg19_bag_bn':
+            self.model = VGG_BagNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
+
+        elif args.arch == 'bagnet33' or args.arch == 'bagnet17' or args.arch == 'bagnet9':
             self.model = BagNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
-        elif 'fusionnet' in args.arch:
+            
+        elif 'fusionnet' == args.arch:
             self.model = BagResNet(pool_num=args.pool_num, pretrained=args.pretrained)
 
         elif 'mcnn' in args.arch:
@@ -86,6 +93,19 @@ class CountTrainer(Trainer):
                 json_path=os.path.join('json', args.dataset, x +'.json'),
                 crop_size=crop_size,
                 phase=x,
+                sigma=args.sigma,
+                pool_num=args.pool_num,
+                up_scale=args.up_scale
+            ) for x in ['train', 'val']}
+
+        elif 'ucf-qnrf' == args.dataset:
+            self.datasets = {x: UCF_QNRF(
+                dataset=args.dataset,
+                arch=args.arch,
+                json_path=os.path.join('json', args.dataset, x +'.json'),
+                crop_size=crop_size,
+                phase=x,
+                rescale=False,
                 sigma=args.sigma,
                 pool_num=args.pool_num,
                 up_scale=args.up_scale

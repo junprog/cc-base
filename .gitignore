@@ -2,6 +2,7 @@
 nohup.out
 json/
 *.bat
+models/weights/*
 
 
 # Byte-compiled / optimized / DLL files

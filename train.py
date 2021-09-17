@@ -33,7 +33,7 @@ def parse_args():
 
     # model
     parser.add_argument('--arch', type=str, default='vgg19',
-                        help='the model architecture [vgg19, vgg19_bn, resnet16, resnet50, resnet101, bagnet33, bagnet17, bagnet9]')
+                        help='the model architecture [vgg19, vgg19_bn, vgg19_bag_bn, resnet16, resnet50, resnet101, bagnet33, bagnet17, bagnet9]')
     parser.add_argument('--pool-num', type=int, default=3,
                         help='pool num')
     parser.add_argument('--up-scale', type=int, default=1,

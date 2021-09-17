@@ -5,6 +5,8 @@ from torchvision.transforms.functional import scale
 downfactor_dict = {
     'vgg19': {'kernel':[2,2,2,2],'stride':[2,2,2,2],'padding':[0,0,0,0]},
     'vgg19_bn': {'kernel':[2,2,2,2],'stride':[2,2,2,2],'padding':[0,0,0,0]},
+    'vgg19_bag': {'kernel':[3,3,3,3,3],'stride':[1,2,2,2,2],'padding':[0,0,0,0,0]},
+    'vgg19_bag_bn': {'kernel':[3,3,3,3,3],'stride':[1,2,2,2,2],'padding':[0,0,0,0,0]},
     'resnet50': {'kernel':[7,3,3,3,3],'stride':[2,2,2,2,2],'padding':[3,1,1,1,1]},
     'bagnet33': {'kernel':[3,3,3,3,3],'stride':[1,2,2,2,1],'padding':[0,0,0,0,0]},
     'bagnet17': {'kernel':[3,3,3,3,1],'stride':[1,2,2,2,1],'padding':[0,0,0,0,0]},
@@ -59,8 +61,8 @@ def calc_scale_factor(in_size: tuple, out_size: tuple):
 
 if __name__ == '__main__':
     in_size = (512, 512)
-    arch = 'fusionnet'
-    pool_num = 4
+    arch = 'vgg19_bag_bn'
+    pool_num = 5
     up_scale = 1
 
     out_size = calc_out_size(arch, in_size, pool_num, up_scale)
