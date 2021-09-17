@@ -13,6 +13,7 @@ from models.resnet import ResNet
 from models.mcnn import MCNN
 from models.csrnet import CSRNet
 from models.bagnet import BagNet
+from models.fusion_model import BagResNet
 
 import argparse
 import logging
@@ -56,6 +57,8 @@ if __name__ == '__main__':
         model = ResNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=False)
     elif 'bagnet' in args.arch:
         model = BagNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=False)
+    elif 'fusionnet' in args.arch:
+        model = BagResNet(pool_num=args.pool_num, pretrained=False)
 
     elif 'mcnn' in args.arch:
         model = MCNN(in_ch=3, up_scale=args.up_scale)

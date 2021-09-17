@@ -230,4 +230,4 @@ class CountTrainer(Trainer):
             logging.info("save best mse {:.2f} mae {:.2f} model epoch {}".format(self.val_best_mse,
                                                                                  self.val_best_mae,
                                                                                  self.epoch))
-            torch.save(model_state_dic, os.path.join(self.save_dir, 'val_best_model.pth'))
+            torch.save(model_state_dic, os.path.join(self.save_dir, 'best_model.pth'))
