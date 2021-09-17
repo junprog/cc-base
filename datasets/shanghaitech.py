@@ -250,7 +250,8 @@ class ShanghaiTechB(data.Dataset):
         ## 変形処理
         if self.phase == 'train':
             ## ランダムクロップ
-            #image, gt_map = self._random_crop(image, gt_map)
+            if not self.img_size == self.crop_size:
+                image, gt_map = self._random_crop(image, gt_map)
             
             ## 50%で反転
             if random.random() > 0.5:
