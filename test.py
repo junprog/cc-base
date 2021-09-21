@@ -69,7 +69,7 @@ if __name__ == '__main__':
     model.to(device)
     print(model)
     #model.load_state_dict(torch.load(os.path.join(args.save_dir, 'best_model.pth'), device))
-    model.load_state_dict(torch.load(os.path.join(args.save_dir, '200_ckpt.tar'), device)['model_state_dict'])
+    model.load_state_dict(torch.load(os.path.join(args.save_dir, '400_ckpt.tar'), device)['model_state_dict'])
     model.eval()
 
     if args.dataset == 'shanghai-tech-a':
@@ -115,6 +115,19 @@ if __name__ == '__main__':
             crop_size=None,
             phase='test',
             rescale=False,
+            sigma=args.sigma,
+            pool_num=args.pool_num,
+            up_scale=args.up_scale
+        )
+    
+    elif 'rescale-ucf-qnrf' == args.dataset:
+        datasets = UCF_QNRF(
+            dataset=args.dataset,
+            arch=args.arch,
+            json_path=os.path.join('json', args.dataset, 'test.json'),
+            crop_size=None,
+            phase='test',
+            rescale=True,
             sigma=args.sigma,
             pool_num=args.pool_num,
             up_scale=args.up_scale

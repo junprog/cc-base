@@ -63,7 +63,7 @@ def parse_args():
     parser.add_argument(
         '--dataset',
         default='',
-        help='dataset name [ucf-qnrf, st-a]'
+        help='dataset name [ucf-qnrf, shanghai-tech-a]'
     )
     args = parser.parse_args()
     return args
@@ -100,7 +100,7 @@ if __name__ == '__main__':
                     np.save(gd_save_path, points)
 
 
-        elif dataset == 'st-a':
+        elif dataset == 'shanghai-tech-a':
             for phase in ['train_data', 'test_data']:
                 sub_dir = os.path.join(args.data_dir, phase, 'images')
                 sub_save_dir = os.path.join(save_dir, phase, 'images')

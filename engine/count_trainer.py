@@ -111,6 +111,19 @@ class CountTrainer(Trainer):
                 up_scale=args.up_scale
             ) for x in ['train', 'val']}
 
+        elif 'rescale-ucf-qnrf' == args.dataset:
+            self.datasets = {x: UCF_QNRF(
+                dataset=args.dataset,
+                arch=args.arch,
+                json_path=os.path.join('json', args.dataset, x +'.json'),
+                crop_size=crop_size,
+                phase=x,
+                rescale=True,
+                sigma=args.sigma,
+                pool_num=args.pool_num,
+                up_scale=args.up_scale
+            ) for x in ['train', 'val']}
+
         self.dataloaders = {x: DataLoader(self.datasets[x],
             batch_size=(args.batch_size if x == 'train' else 1),
             shuffle=(True if x == 'train' else False),
@@ -125,7 +138,8 @@ class CountTrainer(Trainer):
         #args.weight_decay = 5*1e-4
         self.optimizer = optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         #self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[int(args.max_epoch / 2)], gamma=0.1)
-        self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[51, 101, 151], gamma=0.1)
+        #self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[51, 101, 151], gamma=0.1)
+        self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[100, 200, 300], gamma=0.1)
         #self.scheduler = None
 
         self.start_epoch = 0

@@ -33,9 +33,15 @@ def judge_dataset(data_dir):
     """
     dataset = None
 
-    for keyword in dataset_dict.keys():
-        if keyword in data_dir:
-            dataset = dataset_dict[keyword]
+    if 'rescale' in data_dir:
+        for keyword in dataset_dict.keys():
+            if keyword in data_dir:
+                dataset = 'rescale-' + dataset_dict[keyword]
+
+    else:
+        for keyword in dataset_dict.keys():
+            if keyword in data_dir:
+                dataset = dataset_dict[keyword]
 
     return dataset
 
@@ -145,21 +151,27 @@ def create_gt_path(image_path, dataset, phase) -> str:
     if phase == 'train' or phase == 'val':
         if dataset == 'ucf-qnrf':
             gt_path = image_path.replace('.jpg', '_ann.mat')
+        
+        elif dataset == 'rescale-ucf-qnrf':
+            gt_path = image_path.replace('.jpg', '.npy')
 
         elif dataset == 'shanghai-tech-a' or dataset == 'shanghai-tech-b':
             gt_path = image_path.replace('.jpg','.mat').replace('images','ground_truth').replace('IMG_','GT_IMG_')
 
-        if dataset == 'shanghai-tech-rgbd':
+        elif dataset == 'shanghai-tech-rgbd':
             gt_path = image_path.replace('img', 'gt').replace('IMG', 'GT').replace('.png','.mat')
 
     elif phase == 'test':
         if dataset == 'ucf-qnrf':
             gt_path = image_path.replace('.jpg', '_ann.mat')
 
+        elif dataset == 'rescale-ucf-qnrf':
+            gt_path = image_path.replace('.jpg', '.npy')
+
         elif dataset == 'shanghai-tech-a' or dataset == 'shanghai-tech-b':
             gt_path = image_path.replace('.jpg','.mat').replace('images','ground_truth').replace('IMG_','GT_IMG_')
 
-        if dataset == 'shanghai-tech-rgbd':
+        elif dataset == 'shanghai-tech-rgbd':
             gt_path = image_path.replace('img', 'gt_np').replace('IMG', 'GT').replace('.png','.npy')
     
     return gt_path
