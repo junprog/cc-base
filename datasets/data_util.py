@@ -20,7 +20,8 @@ dataset_dict = {
     'UCF-QNRF': 'ucf-qnrf',
     'UCF_CC_50': 'ucf-cc-50',
     'NWPU': 'nwpu-crowd', 
-    'RGBT': 'rgbt-cc'
+    'RGBT': 'rgbt-cc',
+    'synthetic': 'synthetic-datset'
 }
 
 def judge_dataset(data_dir):
@@ -161,6 +162,12 @@ def create_gt_path(image_path, dataset, phase) -> str:
         elif dataset == 'shanghai-tech-rgbd':
             gt_path = image_path.replace('img', 'gt').replace('IMG', 'GT').replace('.png','.mat')
 
+        elif dataset == 'synthetic-dataset' or dataset == 'synthetic-dataset-v2':
+            gt_path = image_path.replace('.png', '_gt.npy')
+
+        elif dataset == 'synthetic-dataset-2d' or dataset == 'synthetic-dataset-2d-bg':
+            gt_path = image_path.replace('.jpg', '_gt.npy')
+
     elif phase == 'test':
         if dataset == 'ucf-qnrf':
             gt_path = image_path.replace('.jpg', '_ann.mat')
@@ -173,6 +180,12 @@ def create_gt_path(image_path, dataset, phase) -> str:
 
         elif dataset == 'shanghai-tech-rgbd':
             gt_path = image_path.replace('img', 'gt_np').replace('IMG', 'GT').replace('.png','.npy')
+
+        elif dataset == 'synthetic-dataset' or dataset == 'synthetic-dataset-v2':
+            gt_path = image_path.replace('.png', '_gt.npy')
+
+        elif dataset == 'synthetic-dataset-2d' or dataset == 'synthetic-dataset-2d-bg':
+            gt_path = image_path.replace('.jpg', '_gt.npy')
     
     return gt_path
 
@@ -509,6 +522,50 @@ def dirname_parser(dataset, phase, style):
             ├ img_*_ann.mat: gt
             └ (own) img_*_den.npy: density
 
+    synthetic-datas/
+        ├ train/
+        │   ├ img_*.jpg: image
+        │   ├ img_*_ann.mat: gt
+        |   └ (own) img_*_den.npy: density
+        │
+        └ test/
+            ├ img_*.jpg: image
+            ├ img_*_ann.mat: gt
+            └ (own) img_*_den.npy: density
+
+    synthetic-datas-v2/
+        ├ train/
+        │   ├ img_*.jpg: image
+        │   ├ img_*_ann.mat: gt
+        |   └ (own) img_*_den.npy: density
+        │
+        └ test/
+            ├ img_*.jpg: image
+            ├ img_*_ann.mat: gt
+            └ (own) img_*_den.npy: density
+
+    synthetic-datas-2d/
+        ├ train/
+        │   ├ img_*.jpg: image
+        │   ├ img_*_ann.mat: gt
+        |   └ (own) img_*_den.npy: density
+        │
+        └ test/
+            ├ img_*.jpg: image
+            ├ img_*_ann.mat: gt
+            └ (own) img_*_den.npy: density
+
+    synthetic-datas-2d-bg/
+        ├ train/
+        │   ├ img_*.jpg: image
+        │   ├ img_*_ann.mat: gt
+        |   └ (own) img_*_den.npy: density
+        │
+        └ test/
+            ├ img_*.jpg: image
+            ├ img_*_ann.mat: gt
+            └ (own) img_*_den.npy: density
+
     styles = ['image', 'depth', 'tempareture', 'gt', 'density', 'bbox']
 
     Args:
@@ -585,6 +642,22 @@ def dirname_parser(dataset, phase, style):
             style_dirname = ''
             target_format = '*.npy'
 
+    elif dataset == 'synthetic-dataset' or dataset == 'synthetic-dataset-v2':
+        if style == 'image':
+            style_dirname = ''
+            target_format = '*.png'
+        elif style == 'gt':
+            style_dirname = ''
+            target_format = '*.npy'
+
+    elif dataset == 'synthetic-dataset-2d' or dataset == 'synthetic-dataset-2d-bg':
+        if style == 'image':
+            style_dirname = ''
+            target_format = '*.jpg'
+        elif style == 'gt':
+            style_dirname = ''
+            target_format = '*.npy'
+
     target_dirname = os.path.join(split_dirname, style_dirname)
 
     return target_dirname, target_format
@@ -597,6 +670,10 @@ def judge_have_style(dataset, style):
             flag = False
     elif dataset == 'shanghai-tech-rgbd':
         not_have_style = ['tempareture']
+        if style in not_have_style:
+            flag = False
+    elif dataset == 'synthetic-dataset' or dataset == 'synthetic-dataset-v2' or dataset == 'synthetic-dataset-2d' or dataset == 'synthetic-dataset-2d-bg':
+        not_have_style = ['density']
         if style in not_have_style:
             flag = False
 

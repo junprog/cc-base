@@ -19,3 +19,9 @@ dataset_dict = {
     'RGBT': 'rgbt-cc'
 }
 ```
+
+## 手順
+
+```bash
+$ python create_json.py 
+```

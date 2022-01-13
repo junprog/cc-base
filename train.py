@@ -40,6 +40,8 @@ def parse_args():
                         help='up scale num')          
     parser.add_argument('--pretrained', action='store_true',
                         help='use ImageNet pretrained model weights')
+    parser.add_argument('--feat-freeze', action='store_true',
+                        help='use pretrained feature extracter weights and freeze these weights')                     
 
     # optimizer
     parser.add_argument('--lr', type=float, default=1e-5,
@@ -58,7 +60,7 @@ def parse_args():
                         help='milestone of save model checkpoint')
 
     # epoch
-    parser.add_argument('--max-epoch', type=int, default=201,
+    parser.add_argument('--max-epoch', type=int, default=401,
                         help='max training epoch')
     parser.add_argument('--val-epoch', type=int, default=5,
                         help='the num of steps to log training information')

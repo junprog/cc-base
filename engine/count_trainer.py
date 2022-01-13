@@ -20,6 +20,7 @@ from utils.helper import worker_init_fn, Save_Handle, AverageMeter
 from datasets.ucf_qnrf import UCF_QNRF
 from datasets.shanghaitech import ShanghaiTechA, ShanghaiTechB
 from datasets.shanghaitech_rgbd import ShanghaiTechRGBD
+from datasets.synthetic_datas import SyntheticDataset
 
 from models.vgg import VGG
 from models.resnet import ResNet
@@ -45,19 +46,19 @@ class CountTrainer(Trainer):
             raise Exception("gpu is not available")
 
         if args.arch == 'vgg19' or args.arch == 'vgg19_bn': 
-            self.model = VGG(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
+            self.model = VGG(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained, feat_freeze=args.feat_freeze)
 
         elif args.arch == 'resnet50':
-            self.model = ResNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
+            self.model = ResNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained, feat_freeze=args.feat_freeze)
 
         elif args.arch == 'vgg19_bag' or args.arch == 'vgg19_bag_bn':
             self.model = VGG_BagNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
 
         elif args.arch == 'bagnet33' or args.arch == 'bagnet17' or args.arch == 'bagnet9':
-            self.model = BagNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained)
+            self.model = BagNet(in_ch=3, arch=args.arch, pool_num=args.pool_num, up_scale=args.up_scale, pretrained=args.pretrained, feat_freeze=args.feat_freeze)
             
         elif 'fusionnet' == args.arch:
-            self.model = BagResNet(pool_num=args.pool_num, pretrained=args.pretrained)
+            self.model = BagResNet(pool_num=args.pool_num, pretrained=args.pretrained, feat_freeze=args.feat_freeze)
 
         elif 'mcnn' in args.arch:
             self.model = MCNN(in_ch=3, up_scale=args.up_scale)
@@ -86,7 +87,7 @@ class CountTrainer(Trainer):
             ) for x in ['train', 'val']}
 
         elif 'shanghai-tech-b' == args.dataset:
-            #crop_size = (768, 1024)
+            crop_size = (1024, 768)
             self.datasets = {x: ShanghaiTechB(
                 dataset=args.dataset,
                 arch=args.arch,
@@ -124,6 +125,18 @@ class CountTrainer(Trainer):
                 up_scale=args.up_scale
             ) for x in ['train', 'val']}
 
+        elif 'synthetic-dataset' == args.dataset or 'synthetic-dataset-v2' == args.dataset or args.dataset == 'synthetic-dataset-2d' or args.dataset == 'synthetic-dataset-2d-bg':
+            self.datasets = {x: SyntheticDataset(
+                dataset=args.dataset,
+                arch=args.arch,
+                json_path=os.path.join('json', args.dataset, x +'.json'),
+                crop_size=crop_size,
+                phase=x,
+                sigma=args.sigma,
+                pool_num=args.pool_num,
+                up_scale=args.up_scale
+            ) for x in ['train', 'val']}
+
         self.dataloaders = {x: DataLoader(self.datasets[x],
             batch_size=(args.batch_size if x == 'train' else 1),
             shuffle=(True if x == 'train' else False),
@@ -139,7 +152,11 @@ class CountTrainer(Trainer):
         self.optimizer = optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         #self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[int(args.max_epoch / 2)], gamma=0.1)
         #self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[51, 101, 151], gamma=0.1)
+        
+        
         self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[100, 200, 300], gamma=0.1)
+        #self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[20, 30, 40], gamma=0.1)
+
         #self.scheduler = None
 
         self.start_epoch = 0
@@ -231,14 +248,14 @@ class CountTrainer(Trainer):
         plotter = Plotter(self.args, 1, save_dir=self.save_dir)
 
         # Iterate over data.
-        for steps, (image, target, num, _) in enumerate(tqdm(self.dataloaders['val'], ncols=100)):
-
+        for steps, (image, target, num, path) in enumerate(tqdm(self.dataloaders['val'], ncols=100)):
             tmp_res = 0
             inputs = image.to(self.device)
 
             # inputs are images with different sizes
             assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'
-            with torch.set_grad_enabled(False):
+            #with torch.set_grad_enabled(False):
+            with torch.no_grad():
                 outputs = self.model(inputs)
                 tmp_res += torch.sum(outputs).item()
 

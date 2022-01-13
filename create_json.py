@@ -57,6 +57,25 @@ def create_json():
             train_img_dir = os.path.join(data_dir, 'train_data/train_img')
             test_img_dir = os.path.join(data_dir, 'test_data/test_img')
             img_format = '*.png'
+        elif 'synthetic-datas' == os.path.basename(data_dir):
+            dataset_name = 'synthetic-dataset'
+            train_img_dir = os.path.join(data_dir, 'train')
+            test_img_dir = os.path.join(data_dir, 'test')
+            img_format = '*.png'
+        elif 'synthetic-datas-v2' == os.path.basename(data_dir):
+            dataset_name = 'synthetic-dataset-v2'
+            train_img_dir = os.path.join(data_dir, 'train')
+            test_img_dir = os.path.join(data_dir, 'test')
+            img_format = '*.png'
+        elif 'synthetic-datas-2d' == os.path.basename(data_dir):
+            dataset_name = 'synthetic-dataset-2d'
+            train_img_dir = os.path.join(data_dir, 'train')
+            test_img_dir = os.path.join(data_dir, 'test')
+        elif 'synthetic-datas-2d-bg' == os.path.basename(data_dir):
+            dataset_name = 'synthetic-dataset-2d-bg'
+            train_img_dir = os.path.join(data_dir, 'train')
+            test_img_dir = os.path.join(data_dir, 'test')
+        
 
     ## 現在のディレクトリにjson/を作成
     if os.path.isdir('json') == False:

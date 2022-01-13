@@ -160,7 +160,7 @@ def bagnet9(pretrained=False, strides=[2, 2, 2, 1], **kwargs):
 
 
 class BagNet(nn.Module):
-    def __init__(self, in_ch=3, arch='bagnet33', pool_num=5, up_scale=1, pretrained=False):
+    def __init__(self, in_ch=3, arch='bagnet33', pool_num=5, up_scale=1, pretrained=False, feat_freeze=False):
         super(BagNet, self).__init__()
         """
         feature_extracter : ResNetの最終fc層なくした事前学習モデル
@@ -171,6 +171,10 @@ class BagNet(nn.Module):
 
         self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
         self.up_scale = up_scale
+
+        if feat_freeze:
+            for params in self.feature_extracter.parameters():
+                params.requires_grad = False
 
     def forward(self, x):
         x = self.feature_extracter(x)

@@ -8,6 +8,7 @@ from utils.helper import setlogger
 from datasets.shanghaitech_rgbd import ShanghaiTechRGBD
 from datasets.shanghaitech import ShanghaiTechA, ShanghaiTechB
 from datasets.ucf_qnrf import UCF_QNRF
+from datasets.synthetic_datas import SyntheticDataset
 
 from models.vgg import VGG
 from models.resnet import ResNet
@@ -15,6 +16,8 @@ from models.mcnn import MCNN
 from models.csrnet import CSRNet
 from models.bagnet import BagNet
 from models.fusion_model import BagResNet
+
+from metrics.error import game
 
 import argparse
 import logging
@@ -48,7 +51,11 @@ if __name__ == '__main__':
     args = parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device.strip('-')  # set vis gpu
 
-    setlogger(os.path.join(args.save_dir, 'test.log'))  # set logger
+    preffix = 'transfer_'
+
+    log_file_name = args.dataset + '_' + preffix + 'test.log'
+
+    setlogger(os.path.join(args.save_dir, log_file_name))  # set logger
 
     device = torch.device('cuda')
 
@@ -68,8 +75,8 @@ if __name__ == '__main__':
 
     model.to(device)
     print(model)
-    #model.load_state_dict(torch.load(os.path.join(args.save_dir, 'best_model.pth'), device))
-    model.load_state_dict(torch.load(os.path.join(args.save_dir, '400_ckpt.tar'), device)['model_state_dict'])
+    model.load_state_dict(torch.load(os.path.join(args.save_dir, 'best_model.pth'), device))
+    #model.load_state_dict(torch.load(os.path.join(args.save_dir, '400_ckpt.tar'), device)['model_state_dict'])
     model.eval()
 
     if args.dataset == 'shanghai-tech-a':
@@ -133,6 +140,18 @@ if __name__ == '__main__':
             up_scale=args.up_scale
         )
 
+    elif args.dataset == 'synthetic-dataset' or args.dataset == 'synthetic-dataset-v2' or args.dataset == 'synthetic-dataset-2d' or args.dataset == 'synthetic-dataset-2d-bg':
+        datasets = SyntheticDataset(
+            dataset=args.dataset,
+            arch=args.arch,
+            json_path=os.path.join('json', args.dataset, 'test.json'),
+            crop_size=None,
+            phase='test',
+            sigma=args.sigma,
+            pool_num=args.pool_num,
+            up_scale=args.up_scale
+        )
+
     dataloader = torch.utils.data.DataLoader(datasets, 1, shuffle=False, num_workers=8, pin_memory=False)
 
     epoch_minus = []
@@ -141,6 +160,8 @@ if __name__ == '__main__':
 
     top_str = 'path\titr\tdiff\tgt_num\testimate'
     logging.info(top_str)
+
+    res_game = [0, 0, 0, 0]
     # Iterate over data.
     for steps, (image, target, num, path) in enumerate(dataloader):
 
@@ -154,6 +175,10 @@ if __name__ == '__main__':
             outputs = model(inputs)
             tmp_res += torch.sum(outputs).item()
 
+        for L in range(4):
+            abs_error, square_error = game(outputs, target, L)
+            res_game[L] += abs_error
+
         if steps % 10 == 0:
             plotter(steps, inputs, outputs[0], target[0], 'test', num)
 
@@ -164,5 +189,7 @@ if __name__ == '__main__':
     epoch_minus = np.array(epoch_minus)
     mse = np.sqrt(np.mean(np.square(epoch_minus)))
     mae = np.mean(np.abs(epoch_minus))
-    log_str = 'Final Test: mae {}, mse {}'.format(mae, mse)
+    N = len(dataloader)
+    res_game = [m / N for m in res_game]
+    log_str = 'Final Test: mae {}, game1 {}, game2 {}, game3 {}, mse {}'.format(mae, res_game[1], res_game[2], res_game[3], mse)
     logging.info(log_str)
