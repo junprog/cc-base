@@ -198,7 +198,7 @@ class BagResNet(nn.Module):
                 # ST-B
                 # model.load_state_dict(torch.load('/mnt/hdd02/res-bagnet/layer-last/stb-bagnet33-pretrained/best_model.pth'))
                 # synthetic
-                model.load_state_dict(torch.load('/mnt/hdd02/res-bagnet/synthetic-2d/transfer/stb-bagnet33-transfer-pretrained/best_model.pth'))
+                model.load_state_dict(torch.load('/mnt/hdd02/res-bagnet/layer-last/imagenet-pretrained/re_qnrf-bagnet33-pretrained-schedule_100step/best_model.pth'))
 
             bag_conv1 = model.feature_extracter.conv1
             bag_conv2 = model.feature_extracter.conv2
@@ -219,7 +219,7 @@ class BagResNet(nn.Module):
                 # ST-B
                 # model.load_state_dict(torch.load('/mnt/hdd02/res-bagnet/layer-last-1/stb-bagnet33-pretrained/best_model.pth'))
                 # synthetic
-                model.load_state_dict(torch.load('/mnt/hdd02/res-bagnet/synthetic-2d/transfer/stb-bagnet33-transfer-pretrained/best_model.pth'))
+                model.load_state_dict(torch.load('/mnt/hdd02/res-bagnet/layer-last/imagenet-pretrained/re_qnrf-bagnet33-pretrained-schedule_100step/best_model.pth'))
 
             bag_conv1 = model.feature_extracter.conv1
             bag_conv2 = model.feature_extracter.conv2
@@ -240,7 +240,7 @@ class BagResNet(nn.Module):
                 # ST-B
                 # model.load_state_dict(torch.load('/mnt/hdd02/res-bagnet/layer-last/stb-resnet50-pretrained/best_model.pth'))
                 # synthetic
-                model.load_state_dict(torch.load('/mnt/hdd02/res-bagnet/synthetic-2d/transfer/stb-resnet50-transfer-pretrained/best_model.pth'))
+                model.load_state_dict(torch.load('/mnt/hdd02/res-bagnet/layer-last/imagenet-pretrained/re_qnrf-resnet50-pretrained/best_model.pth'))
 
             res_conv = model.feature_extracter.conv2d
             res_bn = model.feature_extracter.bn2d
@@ -261,7 +261,7 @@ class BagResNet(nn.Module):
                 # ST-B
                 # model.load_state_dict(torch.load('/mnt/hdd02/res-bagnet/layer-last-1/stb-resnet50-pretrained/best_model.pth'))
                 # synthetic
-                model.load_state_dict(torch.load('/mnt/hdd02/res-bagnet/synthetic-2d/transfer/stb-resnet50-transfer-pretrained/best_model.pth'))
+                model.load_state_dict(torch.load('/mnt/hdd02/res-bagnet/layer-last/imagenet-pretrained/re_qnrf-resnet50-pretrained/best_model.pth'))
 
             res_conv = model.feature_extracter.conv2d
             res_bn = model.feature_extracter.bn2d

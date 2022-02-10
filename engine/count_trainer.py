@@ -148,16 +148,8 @@ class CountTrainer(Trainer):
         self.criterion = nn.MSELoss()
         self.criterion.to(self.device)
 
-        #args.weight_decay = 5*1e-4
         self.optimizer = optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-        #self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[int(args.max_epoch / 2)], gamma=0.1)
-        #self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[51, 101, 151], gamma=0.1)
-        
-        
         self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[100, 200, 300], gamma=0.1)
-        #self.scheduler = lr_scheduler.MultiStepLR(self.optimizer, milestones=[20, 30, 40], gamma=0.1)
-
-        #self.scheduler = None
 
         self.start_epoch = 0
         if args.resume:
