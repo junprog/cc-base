@@ -12,6 +12,7 @@
 * tqdm
 * PIL
 * scipy
+* matplotlib
 
 ## 2. 使用手順
 
